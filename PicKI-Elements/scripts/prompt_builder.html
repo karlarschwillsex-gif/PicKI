@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<title>Prompt Builder</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Nunito:wght@400;600;700;800&display=swap');
+  :root{--bg:#080810;--surface:#0f0f1a;--card:#141422;--border:#252538;--accent:#7c5cfc;--accent2:#fc5c9c;--teal:#3dfcce;--success:#3ddc84;--danger:#ef4444;--warn:#fcb95c;--text:#e8e6f0;--muted:#6b6880;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+  .header{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;gap:10px;}
+  .title{font-family:'Bebas Neue';font-size:18px;letter-spacing:.1em;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .nsfw-row{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:5px 10px;}
+  .nsfw-safe{font-size:11px;font-weight:800;color:var(--success);}
+  .nsfw-hot{font-size:11px;font-weight:800;color:var(--danger);}
+  .toggle{position:relative;width:38px;height:20px;}
+  .toggle input{opacity:0;width:0;height:0;}
+  .tslider{position:absolute;inset:0;background:var(--border);border-radius:20px;cursor:pointer;transition:.2s;}
+  .tslider::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:white;border-radius:50%;transition:.2s;}
+  input:checked+.tslider{background:var(--danger);}
+  input:checked+.tslider::before{transform:translateX(18px);}
+  .close-btn{background:#fc5c5c22;border:1px solid #fc5c5c44;color:#fc5c9c;border-radius:8px;padding:4px 12px;cursor:pointer;font-family:'Nunito';font-size:12px;font-weight:700;}
+  .close-btn:hover{background:#fc5c5c44;}
+
+  .nsfw-bar{background:#ef444411;border-bottom:1px solid #ef444433;padding:5px 14px;font-size:11px;color:var(--danger);display:none;flex-shrink:0;}
+  .nsfw-bar.show{display:block;}
+
+  .prompt-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 14px;flex-shrink:0;}
+  .plabel{font-size:9px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;}
+  .prompt-en{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-family:'DM Mono';font-size:10px;color:var(--teal);min-height:30px;word-break:break-all;line-height:1.5;max-height:55px;overflow-y:auto;}
+  .prompt-de{margin-top:4px;font-size:10px;color:var(--muted);font-style:italic;min-height:14px;}
+  .actions{display:flex;gap:6px;margin-top:6px;}
+  .btn{padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:'Nunito';font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;}
+  .btn:hover{background:var(--border);}
+  .btn.p{background:linear-gradient(135deg,var(--accent),#5a3fd4);border-color:transparent;color:white;}
+  .btn.p:hover{opacity:.9;}
+  .btn.d{color:#fc5c9c;border-color:#fc5c9c33;}
+  .btn.d:hover{background:#fc5c9c11;}
+
+  .extra{padding:5px 14px;flex-shrink:0;}
+  .extra textarea{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono';font-size:11px;padding:6px 10px;resize:none;outline:none;line-height:1.5;}
+  .extra textarea:focus{border-color:var(--accent);}
+  .extra textarea::placeholder{color:var(--muted);}
+
+  .tabs{display:flex;gap:2px;padding:0 10px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;}
+  .tab{padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted);white-space:nowrap;transition:all .15s;}
+  .tab:hover{color:var(--text);}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+  .content{flex:1;overflow-y:auto;padding:12px 14px;}
+  .content::-webkit-scrollbar{width:4px;}
+  .content::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+  .panel{display:none;flex-direction:column;gap:11px;}
+  .panel.active{display:flex;}
+
+  .st{font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;}
+  .chip{padding:4px 11px;border-radius:20px;border:1px solid var(--border);background:var(--card);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text);}
+  .chip:hover{border-color:var(--accent);color:var(--accent);}
+  .chip.on{background:#7c5cfc22;border-color:var(--accent);color:var(--accent);}
+  .chip.nsfw{border-color:#ef444433;color:#ef4444aa;}
+  .chip.nsfw:hover{border-color:var(--danger);color:var(--danger);}
+  .chip.nsfw.on{background:#ef444422;border-color:var(--danger);color:var(--danger);}
+  .chip.hidden{display:none!important;}
+
+  .irow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .irow input{background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono';font-size:12px;padding:6px 10px;outline:none;width:80px;}
+  .irow input:focus{border-color:var(--accent);}
+  .irow span{color:var(--muted);font-size:11px;}
+  .ibtn{padding:5px 12px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#5a3fd4);border:none;color:white;font-family:'Nunito';font-size:11px;font-weight:700;cursor:pointer;}
+  .ibtn:hover{opacity:.85;}
+  .itag{font-size:10px;color:var(--accent);font-family:'DM Mono';}
+  .div{height:1px;background:var(--border);}
+
+  /* NSFW Theme */
+  body.nsfw-on {
+    --bg:#140818;
+    --surface:#1a0820;
+    --card:#200a28;
+    --border:#4a1040;
+    --accent:#fc5c9c;
+    --accent2:#ff2d78;
+    --teal:#ff8cc8;
+  }
+  body.nsfw-on .title {
+    background: linear-gradient(135deg, #fc5c9c, #ff2d78);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  body, .header, .prompt-bar, .tabs, .extra textarea, .chip, .content {
+    transition: background-color 0.4s ease, border-color 0.4s ease, color 0.3s ease;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="title">✦ Prompt Builder</div>
+  <div id="nsfwIndicator" style="font-size:10px;font-family:'DM Mono';color:var(--muted);letter-spacing:.1em;">🔒 SAFE MODE</div>
+  <button class="close-btn" onclick="window.close()">✕ Schließen</button>
+</div>
+
+<div class="nsfw-bar" id="nsfwBar">⚠️ NSFW AN – explizite Inhalte aktiv.</div>
+
+<div class="prompt-bar">
+  <div class="plabel">🇬🇧 Prompt (Englisch)</div>
+  <div class="prompt-en" id="promptEN">Wähle Optionen...</div>
+  <div class="prompt-de" id="promptDE">🇩🇪 Noch keine Auswahl</div>
+  <div class="actions">
+    <button class="btn p" onclick="copyPrompt()">📋 Kopieren</button>
+    <button class="btn p" onclick="usePrompt()">✓ Übernehmen</button>
+    <button class="btn d" onclick="clearAll()">✕ Zurücksetzen</button>
+  </div>
+</div>
+
+<div class="extra">
+  <textarea id="extraInput" rows="2" placeholder="Eigene Ergänzungen..." oninput="onExtraInput()"></textarea>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('person',this)">👤 Person</div>
+  <div class="tab" onclick="showTab('gesicht',this)">😊 Gesicht</div>
+  <div class="tab" onclick="showTab('haare',this)">💇 Haare</div>
+  <div class="tab" onclick="showTab('koerper',this)">🏃 Körper</div>
+  <div class="tab" onclick="showTab('kleidung',this)">👗 Kleidung</div>
+  <div class="tab" onclick="showTab('schuhe',this)">👠 Schuhe</div>
+  <div class="tab" onclick="showTab('posen',this)">🎭 Posen</div>
+  <div class="tab nsfw hidden" id="nsfwTab" onclick="showTab('nsfw',this)">🔞 NSFW</div>
+</div>
+
+<div class="content">
+
+<!-- PERSON -->
+<div class="panel active" id="tab-person">
+  <div>
+    <div class="st">Geschlecht</div>
+    <div class="chips" id="g-geschlecht">
+      <div class="chip" onclick="sel(this,'geschlecht','woman','Frau')">👩 Frau</div>
+      <div class="chip" onclick="sel(this,'geschlecht','man','Mann')">👨 Mann</div>
+      <div class="chip" onclick="sel(this,'geschlecht','non-binary person','Non-Binary')">🧑 Non-Binary</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">Alter (Eingabe)</div>
+    <div class="irow">
+      <input type="number" id="alterInput" min="18" max="80" placeholder="z.B. 25"/>
+      <span>Jahre</span>
+      <button class="ibtn" onclick="sendAlter()">+ Übernehmen</button>
+      <span class="itag" id="alterTag"></span>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">Körpergröße (Eingabe)</div>
+    <div class="irow">
+      <input type="number" id="groesseInput" min="140" max="220" placeholder="z.B. 168"/>
+      <span>cm</span>
+      <button class="ibtn" onclick="sendGroesse()">+ Übernehmen</button>
+      <span class="itag" id="groesseTag"></span>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">Körperbau</div>
+    <div class="chips" id="g-bau">
+      <div class="chip" onclick="sel(this,'bau','very slim body','sehr schlank')">Sehr schlank</div>
+      <div class="chip" onclick="sel(this,'bau','slim body','schlank')">Schlank</div>
+      <div class="chip" onclick="sel(this,'bau','athletic body','athletisch')">Athletisch</div>
+      <div class="chip" onclick="sel(this,'bau','curvy body','kurvig')">Kurvig</div>
+      <div class="chip" onclick="sel(this,'bau','plus size body','Plus Size')">Plus Size</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">Hautton</div>
+    <div class="chips" id="g-hautton">
+      <div class="chip" onclick="sel(this,'hautton','very fair skin','sehr hell')">Sehr hell</div>
+      <div class="chip" onclick="sel(this,'hautton','fair skin','hell')">Hell</div>
+      <div class="chip" onclick="sel(this,'hautton','medium skin tone','mittel')">Mittel</div>
+      <div class="chip" onclick="sel(this,'hautton','olive skin tone','olive')">Olive</div>
+      <div class="chip" onclick="sel(this,'hautton','tan skin','gebräunt')">Gebräunt</div>
+      <div class="chip" onclick="sel(this,'hautton','dark skin','dunkel')">Dunkel</div>
+      <div class="chip" onclick="sel(this,'hautton','very dark skin','sehr dunkel')">Sehr dunkel</div>
+    </div>
+  </div>
+</div>
+
+<!-- GESICHT -->
+<div class="panel" id="tab-gesicht">
+  <div>
+    <div class="st">Gesichtsform</div>
+    <div class="chips" id="g-gesichtsform">
+      <div class="chip" onclick="sel(this,'gesichtsform','oval face','oval')">Oval</div>
+      <div class="chip" onclick="sel(this,'gesichtsform','round face','rund')">Rund</div>
+      <div class="chip" onclick="sel(this,'gesichtsform','heart-shaped face','herzförmig')">Herzförmig</div>
+      <div class="chip" onclick="sel(this,'gesichtsform','square face','eckig')">Eckig</div>
+      <div class="chip" onclick="sel(this,'gesichtsform','angular face','kantig')">Kantig</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">Augenform</div>
+    <div class="chips" id="g-augenform">
+      <div class="chip" onclick="sel(this,'augenform','big eyes','große Augen')">Groß</div>
+      <div class="chip" onclick="sel(this,'augenform','almond-shaped eyes','mandelförmig')">Mandelförmig</div>
+      <div class="chip" onclick="sel(this,'augenform','narrow eyes','schmal')">Schmal</div>
+      <div class="chip" onclick="sel(this,'augenform','round eyes','rund')">Rund</div>
+    </div>
+  </div>
+  <div>
+    <div class="st">Augenfarbe</div>
+    <div class="chips" id="g-augenfarbe">
+      <div class="chip" onclick="sel(this,'augenfarbe','blue eyes','Blau')">👁 Blau</div>
+      <div class="chip" onclick="sel(this,'augenfarbe','icy pale blue eyes','Eisblau')">👁 Eisblau</div>
+      <div class="chip" onclick="sel(this,'augenfarbe','green eyes','Grün')">👁 Grün</div>
+      <div class="chip" onclick="sel(this,'augenfarbe','soft mint green eyes','Mint')">👁 Mint</div>
+      <div class="chip" onclick="sel(this,'augenfarbe','brown eyes','Braun')">👁 Braun</div>
+      <div class="chip" onclick="sel(this,'augenfarbe','hazel eyes','Haselnuss')">👁 Haselnuss</div>
+      <div class="chip" onclick="sel(this,'augenfarbe','grey eyes','Grau')">👁 Grau</div>
+      <div class="chip" onclick="sel(this,'augenfarbe','amber eyes','Bernstein')">👁 Bernstein</div>
+      <div class="chip" onclick="sel(this,'augenfarbe','soft pastel pink eyes','Rosa Pastell')">👁 Rosa</div>
+      <div class="chip" onclick="sel(this,'augenfarbe','soft pastel lavender eyes','Lila Pastell')">👁 Lila</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">Nase</div>
+    <div class="chips" id="g-nase">
+      <div class="chip" onclick="sel(this,'nase','small nose','klein')">Klein</div>
+      <div class="chip" onclick="sel(this,'nase','button nose','Stupsnase')">Stupsnase</div>
+      <div class="chip" onclick="sel(this,'nase','straight nose','gerade')">Gerade</div>
+      <div class="chip" onclick="sel(this,'nase','wide nose','breit')">Breit</div>
+      <div class="chip" onclick="sel(this,'nase','aquiline nose','Adlernase')">Adlernase</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">Mund & Ausdruck</div>
+    <div class="chips" id="g-mund">
+      <div class="chip" onclick="sel(this,'mund','gentle smile','sanftes Lächeln')">😊 Sanft</div>
+      <div class="chip" onclick="sel(this,'mund','smiling with teeth','mit Zähnen')">😁 Mit Zähnen</div>
+      <div class="chip" onclick="sel(this,'mund','laughing','lachend')">😄 Lachen</div>
+      <div class="chip" onclick="sel(this,'mund','serious expression','ernst')">😐 Ernst</div>
+      <div class="chip" onclick="sel(this,'mund','sad expression','traurig')">😢 Traurig</div>
+      <div class="chip" onclick="sel(this,'mund','surprised expression','überrascht')">😮 Überrascht</div>
+      <div class="chip" onclick="sel(this,'mund','seductive look','verführerisch')">😏 Verführerisch</div>
+      <div class="chip" onclick="sel(this,'mund','mouth slightly open','Mund leicht offen')">👄 Leicht offen</div>
+      <div class="chip" onclick="sel(this,'mund','full lips','volle Lippen')">💋 Volle Lippen</div>
+      <div class="chip" onclick="sel(this,'mund','thin lips','dünne Lippen')">Dünne Lippen</div>
+    </div>
+  </div>
+</div>
+
+<!-- HAARE -->
+<div class="panel" id="tab-haare">
+  <div>
+    <div class="st">Haarlänge</div>
+    <div class="chips" id="g-haarlaenge">
+      <div class="chip" onclick="sel(this,'haarlaenge','very short hair','sehr kurz')">Sehr kurz</div>
+      <div class="chip" onclick="sel(this,'haarlaenge','short hair','kurz')">Kurz</div>
+      <div class="chip" onclick="sel(this,'haarlaenge','medium length hair','mittel')">Mittel</div>
+      <div class="chip" onclick="sel(this,'haarlaenge','long hair','lang')">Lang</div>
+      <div class="chip" onclick="sel(this,'haarlaenge','very long hair','sehr lang')">Sehr lang</div>
+      <div class="chip" onclick="sel(this,'haarlaenge','waist length hair','hüftlang')">Hüftlang</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">Frisur</div>
+    <div class="chips" id="g-frisur">
+      <div class="chip" onclick="sel(this,'frisur','straight hair','glatt')">Glatt</div>
+      <div class="chip" onclick="sel(this,'frisur','wavy hair','wellig')">Wellig</div>
+      <div class="chip" onclick="sel(this,'frisur','curly hair','lockig')">Lockig</div>
+      <div class="chip" onclick="sel(this,'frisur','afro hair','Afro')">Afro</div>
+      <div class="chip" onclick="sel(this,'frisur','ponytail','Pferdeschwanz')">Pferdeschwanz</div>
+      <div class="chip" onclick="sel(this,'frisur','bun hairstyle','Dutt')">Dutt</div>
+      <div class="chip" onclick="sel(this,'frisur','braided hair','Zöpfe')">Zöpfe</div>
+      <div class="chip" onclick="sel(this,'frisur','twin tails','Twintails')">Twintails</div>
+      <div class="chip" onclick="sel(this,'frisur','bangs','Pony')">Pony</div>
+      <div class="chip" onclick="sel(this,'frisur','messy hair','zerzaust')">Zerzaust</div>
+      <div class="chip" onclick="sel(this,'frisur','pixie cut','Pixie Cut')">Pixie Cut</div>
+      <div class="chip" onclick="sel(this,'frisur','bob cut','Bob')">Bob</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">Haarfarbe</div>
+    <div class="chips" id="g-haarfarbe">
+      <div class="chip" onclick="sel(this,'haarfarbe','black hair','Schwarz')">🖤 Schwarz</div>
+      <div class="chip" onclick="sel(this,'haarfarbe','dark brown hair','Dunkelbraun')">🟤 Dunkelbraun</div>
+      <div class="chip" onclick="sel(this,'haarfarbe','brown hair','Braun')">Braun</div>
+      <div class="chip" onclick="sel(this,'haarfarbe','light brown hair','Hellbraun')">Hellbraun</div>
+      <div class="chip" onclick="sel(this,'haarfarbe','blonde hair','Blond')">💛 Blond</div>
+      <div class="chip" onclick="sel(this,'haarfarbe','platinum blonde hair','Platinblond')">Platinblond</div>
+      <div class="chip" onclick="sel(this,'haarfarbe','red hair','Rot')">🔴 Rot</div>
+      <div class="chip" onclick="sel(this,'haarfarbe','auburn hair','Rotbraun')">Rotbraun</div>
+      <div class="chip" onclick="sel(this,'haarfarbe','white hair','Weiß')">⚪ Weiß</div>
+      <div class="chip" onclick="sel(this,'haarfarbe','grey hair','Grau')">Grau</div>
+      <div class="chip" onclick="sel(this,'haarfarbe','blue hair','Blau')">💙 Blau</div>
+      <div class="chip" onclick="sel(this,'haarfarbe','pink hair','Pink')">🩷 Pink</div>
+      <div class="chip" onclick="sel(this,'haarfarbe','purple hair','Lila')">💜 Lila</div>
+      <div class="chip" onclick="sel(this,'haarfarbe','teal hair','Türkis')">Türkis</div>
+      <div class="chip" onclick="sel(this,'haarfarbe','ombre hair','Ombre')">Ombre</div>
+    </div>
+  </div>
+</div>
+
+<!-- KÖRPER -->
+<div class="panel" id="tab-koerper">
+  <div>
+    <div class="st">Taille</div>
+    <div class="chips" id="g-taille">
+      <div class="chip" onclick="sel(this,'taille','very slim waist','sehr schmal')">Sehr schmal</div>
+      <div class="chip" onclick="sel(this,'taille','slim waist','schmal')">Schmal</div>
+      <div class="chip" onclick="sel(this,'taille','defined waist','definiert')">Definiert</div>
+      <div class="chip" onclick="sel(this,'taille','wide waist','breit')">Breit</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">Brust</div>
+    <div class="chips" id="g-brust">
+      <div class="chip" onclick="sel(this,'brust','flat chest','flach')">Flach</div>
+      <div class="chip" onclick="sel(this,'brust','small chest','klein')">Klein</div>
+      <div class="chip" onclick="sel(this,'brust','medium chest','mittel')">Mittel</div>
+      <div class="chip" onclick="sel(this,'brust','large chest','groß')">Groß</div>
+      <div class="chip" onclick="sel(this,'brust','very large chest','sehr groß')">Sehr groß</div>
+      <div class="chip" onclick="sel(this,'brust','huge chest','sehr groß XXL')">XXL</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">Hüfte & Po</div>
+    <div class="chips" id="g-huefte">
+      <div class="chip" onclick="sel(this,'huefte','narrow hips','schmale Hüften')">Schmale Hüften</div>
+      <div class="chip" onclick="sel(this,'huefte','wide hips','breite Hüften')">Breite Hüften</div>
+      <div class="chip" onclick="sel(this,'huefte','curvy hips','kurvige Hüften')">Kurvige Hüften</div>
+      <div class="chip" onclick="sel(this,'huefte','small butt','kleiner Po')">Kleiner Po</div>
+      <div class="chip" onclick="sel(this,'huefte','round butt','runder Po')">Runder Po</div>
+      <div class="chip" onclick="sel(this,'huefte','big butt','großer Po')">Großer Po</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">Beine</div>
+    <div class="chips" id="g-beine">
+      <div class="chip" onclick="sel(this,'beine','very thin legs','sehr dünn')">Sehr dünn</div>
+      <div class="chip" onclick="sel(this,'beine','slim legs','schlank')">Schlank</div>
+      <div class="chip" onclick="sel(this,'beine','athletic legs','athletisch')">Athletisch</div>
+      <div class="chip" onclick="sel(this,'beine','muscular legs','muskulös')">Muskulös</div>
+      <div class="chip" onclick="sel(this,'beine','thick legs','kräftig')">Kräftig</div>
+      <div class="chip" onclick="sel(this,'beine','long legs','lang')">Lang</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">Arme</div>
+    <div class="chips" id="g-arme">
+      <div class="chip" onclick="sel(this,'arme','very thin arms','sehr dünn')">Sehr dünn</div>
+      <div class="chip" onclick="sel(this,'arme','slim arms','schlank')">Schlank</div>
+      <div class="chip" onclick="sel(this,'arme','toned arms','definiert')">Definiert</div>
+      <div class="chip" onclick="sel(this,'arme','muscular arms','muskulös')">Muskulös</div>
+    </div>
+  </div>
+</div>
+
+<!-- KLEIDUNG -->
+<div class="panel" id="tab-kleidung">
+  <div>
+    <div class="st">Oberteil</div>
+    <div class="chips" id="g-oberteil">
+      <div class="chip" onclick="sel(this,'oberteil','wearing a t-shirt','T-Shirt')">T-Shirt</div>
+      <div class="chip" onclick="sel(this,'oberteil','wearing a crop top','Crop Top')">Crop Top</div>
+      <div class="chip" onclick="sel(this,'oberteil','wearing a blouse','Bluse')">Bluse</div>
+      <div class="chip" onclick="sel(this,'oberteil','wearing a tank top','Tank Top')">Tank Top</div>
+      <div class="chip" onclick="sel(this,'oberteil','wearing a hoodie','Hoodie')">Hoodie</div>
+      <div class="chip" onclick="sel(this,'oberteil','wearing a sweater','Pullover')">Pullover</div>
+      <div class="chip" onclick="sel(this,'oberteil','wearing a jacket','Jacke')">Jacke</div>
+      <div class="chip" onclick="sel(this,'oberteil','wearing a leather jacket','Lederjacke')">Lederjacke</div>
+      <div class="chip" onclick="sel(this,'oberteil','wearing a bikini top','Bikini-Oberteil')">Bikini-Oberteil</div>
+      <div class="chip" onclick="sel(this,'oberteil','wearing a bra','BH')">BH</div>
+      <div class="chip nsfw hidden" onclick="sel(this,'oberteil','topless, bare breasts','Oben ohne')">🔞 Oben ohne</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">Unterteil</div>
+    <div class="chips" id="g-unterteil">
+      <div class="chip" onclick="sel(this,'unterteil','wearing jeans','Jeans')">Jeans</div>
+      <div class="chip" onclick="sel(this,'unterteil','wearing shorts','Shorts')">Shorts</div>
+      <div class="chip" onclick="sel(this,'unterteil','wearing a skirt','Rock')">Rock</div>
+      <div class="chip" onclick="sel(this,'unterteil','wearing a mini skirt','Minirock')">Minirock</div>
+      <div class="chip" onclick="sel(this,'unterteil','wearing leggings','Leggings')">Leggings</div>
+      <div class="chip" onclick="sel(this,'unterteil','wearing trousers','Hose')">Hose</div>
+      <div class="chip" onclick="sel(this,'unterteil','wearing panties','Unterhose')">Unterhose</div>
+      <div class="chip" onclick="sel(this,'unterteil','wearing a bikini bottom','Bikini-Unterteil')">Bikini-Unterteil</div>
+      <div class="chip nsfw hidden" onclick="sel(this,'unterteil','bottomless, nude lower body','Unten ohne')">🔞 Unten ohne</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">Ganzkörper-Kleidung</div>
+    <div class="chips" id="g-ganzkoerper">
+      <div class="chip" onclick="sel(this,'ganzkoerper','wearing a summer dress','Sommerkleid')">Sommerkleid</div>
+      <div class="chip" onclick="sel(this,'ganzkoerper','wearing a mini dress','Minikleid')">Minikleid</div>
+      <div class="chip" onclick="sel(this,'ganzkoerper','wearing an evening dress','Abendkleid')">Abendkleid</div>
+      <div class="chip" onclick="sel(this,'ganzkoerper','wearing a cocktail dress','Cocktailkleid')">Cocktailkleid</div>
+      <div class="chip" onclick="sel(this,'ganzkoerper','wearing a petticoat dress','Petticoat')">Petticoat</div>
+      <div class="chip" onclick="sel(this,'ganzkoerper','wearing a jumpsuit','Jumpsuit')">Jumpsuit</div>
+      <div class="chip" onclick="sel(this,'ganzkoerper','wearing an overall','Overall')">Overall</div>
+      <div class="chip" onclick="sel(this,'ganzkoerper','wearing a pantsuit','Hosenanzug')">Hosenanzug</div>
+      <div class="chip" onclick="sel(this,'ganzkoerper','wearing a skirt suit','Rockanzug')">Rockanzug</div>
+      <div class="chip" onclick="sel(this,'ganzkoerper','wearing a nightgown','Nachthemd')">Nachthemd</div>
+      <div class="chip" onclick="sel(this,'ganzkoerper','wearing a babydoll dress','Babydoll')">Babydoll</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">Kleid-Details: Schlitz</div>
+    <div class="chips" id="g-schlitz">
+      <div class="chip" onclick="sel(this,'schlitz','dress with high slit up to the hip','Schlitz hoch')">Schlitz hoch</div>
+      <div class="chip" onclick="sel(this,'schlitz','dress with mid slit up to the thigh','Schlitz mittig')">Schlitz mittig</div>
+      <div class="chip" onclick="sel(this,'schlitz','dress with low slit up to the knee','Schlitz unten')">Schlitz unten</div>
+    </div>
+  </div>
+  <div>
+    <div class="st">Ausschnitt vorne</div>
+    <div class="chips" id="g-ausschnittV">
+      <div class="chip" onclick="sel(this,'ausschnittV','high neckline','Halsanliegend')">Halsanliegend</div>
+      <div class="chip" onclick="sel(this,'ausschnittV','normal neckline','normal')">Normal</div>
+      <div class="chip" onclick="sel(this,'ausschnittV','low cut neckline showing cleavage','tief')">Tief</div>
+      <div class="chip" onclick="sel(this,'ausschnittV','very deep neckline down to the belly button','bis Bauchnabel')">Bis Bauchnabel</div>
+      <div class="chip" onclick="sel(this,'ausschnittV','open midriff bare stomach','bauchfrei')">Bauchfrei</div>
+    </div>
+  </div>
+  <div>
+    <div class="st">Ausschnitt hinten</div>
+    <div class="chips" id="g-ausschnittH">
+      <div class="chip" onclick="sel(this,'ausschnittH','closed back','geschlossen')">Geschlossen</div>
+      <div class="chip" onclick="sel(this,'ausschnittH','open back down to the waist','bis Taille')">Bis Taille</div>
+      <div class="chip" onclick="sel(this,'ausschnittH','open back down to half back','halber Rücken')">Halber Rücken</div>
+      <div class="chip" onclick="sel(this,'ausschnittH','backless dress open to the lower back','tief offen')">Tief offen</div>
+      <div class="chip nsfw hidden" onclick="sel(this,'ausschnittH','backless dress open all the way down to the buttocks','bis zur Kimme')">🔞 Bis zur Kimme</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">Farbe der Kleidung</div>
+    <div class="chips" id="g-kleiderfarbe">
+      <div class="chip" onclick="sel(this,'kleiderfarbe','black clothing','Schwarz')">⚫ Schwarz</div>
+      <div class="chip" onclick="sel(this,'kleiderfarbe','white clothing','Weiß')">⚪ Weiß</div>
+      <div class="chip" onclick="sel(this,'kleiderfarbe','red clothing','Rot')">🔴 Rot</div>
+      <div class="chip" onclick="sel(this,'kleiderfarbe','blue clothing','Blau')">🔵 Blau</div>
+      <div class="chip" onclick="sel(this,'kleiderfarbe','green clothing','Grün')">🟢 Grün</div>
+      <div class="chip" onclick="sel(this,'kleiderfarbe','yellow clothing','Gelb')">🟡 Gelb</div>
+      <div class="chip" onclick="sel(this,'kleiderfarbe','pink clothing','Pink')">🩷 Pink</div>
+      <div class="chip" onclick="sel(this,'kleiderfarbe','purple clothing','Lila')">💜 Lila</div>
+      <div class="chip" onclick="sel(this,'kleiderfarbe','orange clothing','Orange')">🟠 Orange</div>
+      <div class="chip" onclick="sel(this,'kleiderfarbe','grey clothing','Grau')">Grau</div>
+      <div class="chip" onclick="sel(this,'kleiderfarbe','brown clothing','Braun')">🟤 Braun</div>
+      <div class="chip" onclick="sel(this,'kleiderfarbe','colorful clothing','Bunt')">🌈 Bunt</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">Logo / Aufdruck</div>
+    <div class="chips" id="g-logo">
+      <div class="chip" onclick="sel(this,'logo','','Kein Logo')">Kein Logo</div>
+      <div class="chip" onclick="sel(this,'logo','wearing clothing with FaireWelt logo printed on chest, colorful fox mascot gaming design','FaireWelt Logo')">🐺 FaireWelt</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCHUHE -->
+<div class="panel" id="tab-schuhe">
+  <div>
+    <div class="st">Schuhtyp</div>
+    <div class="chips" id="g-schuhe">
+      <div class="chip" onclick="sel(this,'schuhe','barefoot','Barfuß')">🦶 Barfuß</div>
+      <div class="chip" onclick="sel(this,'schuhe','wearing sneakers','Sneaker')">👟 Sneaker</div>
+      <div class="chip" onclick="sel(this,'schuhe','wearing elegant stiletto high heels, classy','Stiletto')">👠 Stiletto</div>
+      <div class="chip" onclick="sel(this,'schuhe','wearing elegant block heels, fashionable','Block Heels')">👠 Block Heels</div>
+      <div class="chip" onclick="sel(this,'schuhe','wearing elegant peeptoe platform stiletto heels, classy fashionable','Peeptoe Plateau')">👠 Peeptoe Plateau</div>
+      <div class="chip" onclick="sel(this,'schuhe','wearing elegant white block platform heels mary jane style, classy','Block Plateau')">👠 Block Plateau</div>
+      <div class="chip" onclick="sel(this,'schuhe','wearing elegant glitter crystal platform heels, party fashion, classy','Glitzer Plateau')">✨ Glitzer Plateau</div>
+      <div class="chip" onclick="sel(this,'schuhe','wearing elegant denim platform heels with decorative bow detail, fashionable classy','Denim Plateau')">🎀 Denim Plateau</div>
+      <div class="chip" onclick="sel(this,'schuhe','wearing boots','Stiefel')">👢 Stiefel</div>
+      <div class="chip" onclick="sel(this,'schuhe','wearing ankle boots','Stiefeletten')">Stiefeletten</div>
+      <div class="chip" onclick="sel(this,'schuhe','wearing thigh high boots','Oberschenkelhohe Stiefel')">Oberschenkelhohe Stiefel</div>
+      <div class="chip" onclick="sel(this,'schuhe','wearing sandals','Sandalen')">Sandalen</div>
+      <div class="chip" onclick="sel(this,'schuhe','wearing flip flops','Flip Flops')">🩴 Flip Flops</div>
+      <div class="chip" onclick="sel(this,'schuhe','wearing loafers','Loafer')">Loafer</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">Schuhfarbe</div>
+    <div class="chips" id="g-schuhfarbe">
+      <div class="chip" onclick="sel(this,'schuhfarbe','black shoes','Schwarz')">⚫ Schwarz</div>
+      <div class="chip" onclick="sel(this,'schuhfarbe','white shoes','Weiß')">⚪ Weiß</div>
+      <div class="chip" onclick="sel(this,'schuhfarbe','red shoes','Rot')">🔴 Rot</div>
+      <div class="chip" onclick="sel(this,'schuhfarbe','brown shoes','Braun')">🟤 Braun</div>
+      <div class="chip" onclick="sel(this,'schuhfarbe','nude shoes','Nude')">Nude</div>
+      <div class="chip" onclick="sel(this,'schuhfarbe','silver shoes','Silber')">Silber</div>
+      <div class="chip" onclick="sel(this,'schuhfarbe','gold shoes','Gold')">Gold</div>
+      <div class="chip" onclick="sel(this,'schuhfarbe','pink shoes','Pink')">🩷 Pink</div>
+      <div class="chip" onclick="sel(this,'schuhfarbe','blue shoes','Blau')">🔵 Blau</div>
+    </div>
+  </div>
+</div>
+
+<!-- POSEN & HANDLUNGEN -->
+<div class="panel" id="tab-posen">
+  <div>
+    <div class="st">🪑 Sitzend</div>
+    <div class="chips" id="g-sitzen">
+      <div class="chip" onclick="sel(this,'pose','sitting on a chair, upright','sitzend auf Stuhl')">Sitzend</div>
+      <div class="chip" onclick="sel(this,'pose','sitting on the floor','auf dem Boden sitzend')">Auf dem Boden</div>
+      <div class="chip" onclick="sel(this,'pose','squatting down','hockend')">Hockend</div>
+      <div class="chip" onclick="sel(this,'pose','sitting with legs spread apart','breitbeinig sitzend')">Breitbeinig</div>
+      <div class="chip" onclick="sel(this,'pose','sitting with legs crossed elegantly','Beine übereinandergeschlagen')">Beine überlagend</div>
+      <div class="chip" onclick="sel(this,'pose','sitting on a table edge','auf Tischkante sitzend')">Auf Tischkante</div>
+      <div class="chip" onclick="sel(this,'pose','kneeling on the floor','kniend')">Kniend</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">🚶 Bewegung</div>
+    <div class="chips" id="g-bewegung">
+      <div class="chip" onclick="sel(this,'pose','walking forward confidently','laufend')">Laufend</div>
+      <div class="chip" onclick="sel(this,'pose','dancing gracefully','tanzend')">Tanzend</div>
+      <div class="chip" onclick="sel(this,'pose','jumping in the air joyfully','springend')">Springend</div>
+      <div class="chip" onclick="sel(this,'pose','turning around looking over shoulder','sich umdrehend')">Sich umdrehend</div>
+      <div class="chip" onclick="sel(this,'pose','stretching arms upward','sich streckend')">Streckend</div>
+      <div class="chip" onclick="sel(this,'pose','spinning around','sich drehend')">Sich drehend</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">🤝 Angelehnt</div>
+    <div class="chips" id="g-angelehnt">
+      <div class="chip" onclick="sel(this,'pose','leaning against a door frame','an Türrahmen angelehnt')">Türrahmen</div>
+      <div class="chip" onclick="sel(this,'pose','leaning against a wall','an Wand angelehnt')">Wand</div>
+      <div class="chip" onclick="sel(this,'pose','leaning against a table','an Tisch angelehnt')">Tisch</div>
+      <div class="chip" onclick="sel(this,'pose','leaning against a street lamp','an Straßenlaterne angelehnt')">Laterne</div>
+      <div class="chip" onclick="sel(this,'pose','leaning against a car','an Auto angelehnt')">Auto</div>
+      <div class="chip" onclick="sel(this,'pose','leaning against a window','an Fenster angelehnt')">Fenster</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">😊 Stimmung & Gefühl</div>
+    <div class="chips" id="g-stimmung">
+      <div class="chip" onclick="sel(this,'pose','happy joyful expression, laughing','glücklich')">😄 Glücklich</div>
+      <div class="chip" onclick="sel(this,'pose','cute adorable expression, kawaii','niedlich')">🥰 Niedlich</div>
+      <div class="chip" onclick="sel(this,'pose','shy bashful expression, looking away blushing','schüchtern')">😳 Schüchtern</div>
+      <div class="chip" onclick="sel(this,'pose','embarrassed blushing red cheeks','verlegen')">😊 Verlegen</div>
+      <div class="chip" onclick="sel(this,'pose','angry expression, frowning, annoyed','wütend')">😠 Wütend</div>
+      <div class="chip" onclick="sel(this,'pose','sad puppy eyes, begging expression, hands clasped','bettelnd')">🥺 Bettelnd</div>
+      <div class="chip" onclick="sel(this,'pose','tired sleepy expression, drooping eyes','müde')">😴 Müde</div>
+      <div class="chip" onclick="sel(this,'pose','excited hyperactive expression, energetic','aufgedreht')">🤩 Aufgedreht</div>
+      <div class="chip" onclick="sel(this,'pose','scared frightened expression, wide eyes','fürchtend')">😨 Fürchtend</div>
+      <div class="chip" onclick="sel(this,'pose','dreamy thoughtful expression, looking into distance','träumerisch')">🌙 Träumerisch</div>
+      <div class="chip" onclick="sel(this,'pose','confident powerful expression, hands on hips','selbstbewusst')">💪 Selbstbewusst</div>
+      <div class="chip" onclick="sel(this,'pose','bored unimpressed expression','gelangweilt')">😒 Gelangweilt</div>
+      <div class="chip" onclick="sel(this,'pose','playful mischievous grin','verspielt')">😈 Verspielt</div>
+      <div class="chip" onclick="sel(this,'pose','mysterious enigmatic expression','geheimnisvoll')">🌹 Geheimnisvoll</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">💃 Flirty & Verführerisch</div>
+    <div class="chips" id="g-flirty">
+      <div class="chip" onclick="sel(this,'pose','flirty playful pose, winking','flirty')">😉 Flirty</div>
+      <div class="chip" onclick="sel(this,'pose','seductive pose, looking at camera with bedroom eyes','verführerisch')">😏 Verführerisch</div>
+      <div class="chip" onclick="sel(this,'pose','posing confidently, hand on hip','selbstbewusst posend')">Model-Pose</div>
+      <div class="chip" onclick="sel(this,'pose','looking over shoulder seductively','über Schulter schauend')">Über Schulter</div>
+      <div class="chip" onclick="sel(this,'pose','biting lower lip flirtatiously','Lippe beißend')">Lippe beißend</div>
+      <div class="chip" onclick="sel(this,'pose','tossing hair back flirtatiously','Haare zurückwerfend')">Haare werfen</div>
+      <div class="chip" onclick="sel(this,'pose','touching chin thoughtfully and flirtatiously','Kinn berührend')">Kinn berühren</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">🔥 Horny (angezogen 😄)</div>
+    <div class="chips" id="g-horny">
+      <div class="chip" onclick="sel(this,'pose','aroused expression, heavy lidded eyes, fully clothed','verführerischer Blick')">Verführerischer Blick</div>
+      <div class="chip" onclick="sel(this,'pose','seductive pose arching back slightly, fully clothed','Rücken wölbend')">Rücken wölben</div>
+      <div class="chip" onclick="sel(this,'pose','suggestive pose, running hand through hair slowly, fully clothed','durch Haare fahren')">Durch Haare fahren</div>
+      <div class="chip" onclick="sel(this,'pose','lying on bed in suggestive pose, fully clothed','liegend auf Bett')">Liegend auf Bett</div>
+      <div class="chip" onclick="sel(this,'pose','sultry expression, leaning forward slightly, fully clothed','nach vorne gelehnt')">Nach vorne gelehnt</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">📸 Kamera & Blick</div>
+    <div class="chips" id="g-kamera">
+      <div class="chip" onclick="sel(this,'pose','looking directly into camera','in Kamera schauend')">In Kamera</div>
+      <div class="chip" onclick="sel(this,'pose','looking away from camera','wegschauend')">Wegschauend</div>
+      <div class="chip" onclick="sel(this,'pose','laughing to the side','zur Seite lachend')">Zur Seite</div>
+      <div class="chip" onclick="sel(this,'pose','eyes closed, peaceful','Augen zu')">Augen zu</div>
+      <div class="chip" onclick="sel(this,'pose','looking down shyly','schüchtern nach unten')">Nach unten</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- NSFW EXTRAS (hidden until unlocked) -->
+<div class="panel" id="tab-nsfw" style="display:none!important">
+  <div style="background:#fc5c9c22;border:1px solid #fc5c9c44;border-radius:10px;padding:10px 14px;font-size:11px;color:#fc5c9c;margin-bottom:4px;">
+    🔞 NSFW Inhalte – nur für Erwachsene
+  </div>
+  <div>
+    <div class="st">Spezielle Kleidung</div>
+    <div class="chips" id="g-nsfw-kleidung">
+      <div class="chip nsfw" onclick="sel(this,'nsfwKleidung','wearing a transparent babydoll negligee, sheer fabric','Transparentes Babydoll')">🌸 Transparentes Babydoll</div>
+      <div class="chip nsfw" onclick="sel(this,'nsfwKleidung','wearing a sheer body stocking, fishnet bodysuit','Bodystocking')">Bodystocking</div>
+      <div class="chip nsfw" onclick="sel(this,'nsfwKleidung','wearing a tight corset, waist cincher','Corsage/Korsett')">🎀 Corsage</div>
+      <div class="chip nsfw" onclick="sel(this,'nsfwKleidung','wearing thigh high stockings with garter belt straps','Strapse mit Strapshalter')">Strapse mit Halter</div>
+      <div class="chip nsfw" onclick="sel(this,'nsfwKleidung','wearing thigh high stay-up stockings, hold-ups','Halterlose Strümpfe')">Halterlose Strümpfe</div>
+      <div class="chip nsfw" onclick="sel(this,'nsfwKleidung','wearing lace lingerie set, bra and panties','Spitzen-Lingerie Set')">🌺 Spitzen-Lingerie</div>
+      <div class="chip nsfw" onclick="sel(this,'nsfwKleidung','wearing a string thong','String/Tanga')">String/Tanga</div>
+      <div class="chip nsfw" onclick="sel(this,'nsfwKleidung','wearing a latex catsuit, shiny tight fitting','Latex Catsuit')">Latex Catsuit</div>
+      <div class="chip nsfw" onclick="sel(this,'nsfwKleidung','wearing a leather bondage harness straps','Leder Harness')">Leder Harness</div>
+      <div class="chip nsfw" onclick="sel(this,'nsfwKleidung','wearing a fishnet mesh outfit','Netz-Outfit')">Netz-Outfit</div>
+      <div class="chip nsfw" onclick="sel(this,'nsfwKleidung','wearing pasties nipple covers only','Pasties')">Pasties</div>
+      <div class="chip nsfw" onclick="sel(this,'nsfwKleidung','completely naked, nude','Komplett nackt')">🔞 Nackt</div>
+    </div>
+  </div>
+  <div class="div"></div>
+  <div>
+    <div class="st">Intime Posen</div>
+    <div class="chips" id="g-nsfw-posen">
+      <div class="chip nsfw" onclick="sel(this,'nsfwPose','lying on back with legs spread apart, explicit pose','liegend Beine gespreizt')">Liegend gespreizt</div>
+      <div class="chip nsfw" onclick="sel(this,'nsfwPose','on all fours doggy style pose','auf allen Vieren')">Auf allen Vieren</div>
+      <div class="chip nsfw" onclick="sel(this,'nsfwPose','sitting in a sex swing love swing, legs spread','in Liebesschaukel')">Liebesschaukel</div>
+      <div class="chip nsfw" onclick="sel(this,'nsfwPose','suspended in a sling, legs raised and spread','im Sling')">Im Sling</div>
+      <div class="chip nsfw" onclick="sel(this,'nsfwPose','lying in a gynaecological chair, legs raised in stirrups spread wide','auf Gynästuhl')">Gynästuhl</div>
+      <div class="chip nsfw" onclick="sel(this,'nsfwPose','bent over a table from behind','über Tisch gebeugt')">Über Tisch gebeugt</div>
+      <div class="chip nsfw" onclick="sel(this,'nsfwPose','kneeling submissive pose, looking up','kniend unterwürfig')">Kniend unterwürfig</div>
+      <div class="chip nsfw" onclick="sel(this,'nsfwPose','lying on stomach, arching back, looking over shoulder','auf Bauch liegend')">Auf Bauch liegend</div>
+      <div class="chip nsfw" onclick="sel(this,'nsfwPose','legs raised in the air, lying on back','Beine in der Luft')">Beine hoch</div>
+      <div class="chip nsfw" onclick="sel(this,'nsfwPose','straddling, legs spread wide, facing forward','rittlings sitzend')">Rittlings</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end content -->
+
+<script>
+const S = {};
+let nsfwOn = false;
+
+function toggleNSFW() {
+  nsfwOn = !nsfwOn;
+  document.body.classList.toggle('nsfw-on', nsfwOn);
+  document.getElementById('nsfwBar').classList.toggle('show', nsfwOn);
+  document.getElementById('nsfwIndicator').textContent = nsfwOn ? '🔞 NSFW MODE' : '🔒 SAFE MODE';
+  document.getElementById('nsfwIndicator').style.color = nsfwOn ? '#fc5c9c' : 'var(--muted)';
+
+  // NSFW Tab ein/ausblenden
+  const nsfwTab = document.getElementById('nsfwTab');
+  if (nsfwOn) nsfwTab.classList.remove('hidden');
+  else {
+    nsfwTab.classList.add('hidden');
+    // Wenn NSFW Tab aktiv war, zurück zu Person
+    if (document.getElementById('tab-nsfw').classList.contains('active')) {
+      showTab('person', document.querySelector('.tab'));
+    }
+    document.getElementById('tab-nsfw').style.display = 'none';
+  }
+  if (nsfwOn) document.getElementById('tab-nsfw').style.display = '';
+
+  // NSFW Chips ein/ausblenden
+  document.querySelectorAll('.chip.nsfw').forEach(c => {
+    if (nsfwOn) c.classList.remove('hidden');
+    else {
+      c.classList.add('hidden');
+      if (c.classList.contains('on')) {
+        c.classList.remove('on');
+        const grp = c.getAttribute('onclick').match(/sel\(this,'([^']+)'/)?.[1];
+        if (grp) delete S[grp];
+      }
+    }
+  });
+  updatePrompt();
+}
+
+// Tastenkombination: Strg + Shift + N
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.shiftKey && e.key === 'N') {
+    e.preventDefault();
+    toggleNSFW();
+  }
+});
+
+function sel(el, group, en, de) {
+  if (el.classList.contains('nsfw') && !nsfwOn) return;
+  const wasOn = el.classList.contains('on');
+  document.querySelectorAll('[id="g-' + group + '"] .chip, [id="g-sitzen"] .chip, [id="g-bewegung"] .chip, [id="g-angelehnt"] .chip, [id="g-stimmung"] .chip, [id="g-flirty"] .chip, [id="g-horny"] .chip, [id="g-kamera"] .chip').forEach(c => {
+    if (c.dataset.group === group || c.closest('[id="g-' + group + '"]')) c.classList.remove('on');
+  });
+  document.querySelectorAll('[id="g-' + group + '"] .chip').forEach(c => c.classList.remove('on'));
+  if (wasOn) { delete S[group]; }
+  else { el.classList.add('on'); if (en) S[group] = {en, de}; else delete S[group]; }
+  updatePrompt();
+}
+
+function sendAlter() {
+  const v = parseInt(document.getElementById('alterInput').value);
+  if (!v || v < 18 || v > 80) { alert('Bitte ein Alter zwischen 18 und 80 eingeben!'); return; }
+  S['alter'] = {en: v + ' year old', de: v + ' Jahre'};
+  document.getElementById('alterTag').textContent = '✓ ' + v + ' Jahre';
+  updatePrompt();
+}
+
+function sendGroesse() {
+  const v = parseInt(document.getElementById('groesseInput').value);
+  if (!v || v < 140 || v > 220) { alert('Bitte eine Größe zwischen 140 und 220cm eingeben!'); return; }
+  S['groesse'] = {en: v + 'cm tall', de: v + ' cm'};
+  document.getElementById('groesseTag').textContent = '✓ ' + v + ' cm';
+  updatePrompt();
+}
+
+// ── SAFE Mode Wortfilter ──
+const BLOCKED_WORDS = [
+  // Englisch - explizit
+  'naked','nude','nudity','topless','bottomless','nipple','nipples',
+  'pussy','vagina','vulva','labia','clitoris','clit',
+  'penis','dick','cock','balls','testicles','scrotum',
+  'ass','anus','butthole','rectum',
+  'boobs','boob','tits','tit','breasts exposed','bare breasts',
+  'sex','sexual','porn','pornographic','explicit','xxx','nsfw',
+  'masturbat','orgasm','erotic','hentai','uncensored',
+  'spread legs','legs spread','crotch','groin','genital',
+  'cum','cumshot','ejacul','intercourse','penetrat',
+  // Deutsch - explizit
+  'nackt','nackig','oben ohne','unten ohne',
+  'titten','titte','möse','fotze','muschi','vagina',
+  'schwanz','penis','glied','hoden','eier',
+  'po nackt','arsch','anus','hintern nackt',
+  'sex','porno','erotisch','explicit','hentai',
+  'masturbier','orgasmus','befriedigung',
+  'spreiz','gespreiz','beine offen',
+  'brüste nackt','brüste frei','nippel',
+];
+
+function filterText(text) {
+  if (nsfwOn) return text; // Kein Filter wenn NSFW aktiv
+  let filtered = text;
+  BLOCKED_WORDS.forEach(word => {
+    const regex = new RegExp(word, 'gi');
+    filtered = filtered.replace(regex, '***');
+  });
+  return filtered;
+}
+
+function onExtraInput() {
+  const input = document.getElementById('extraInput');
+  if (!nsfwOn) {
+    const original = input.value;
+    const filtered = filterText(original);
+    if (filtered !== original) {
+      input.value = filtered;
+      input.style.borderColor = '#ef4444';
+      setTimeout(() => input.style.borderColor = '', 1500);
+      showFilterWarning();
+    }
+  }
+  updatePrompt();
+}
+
+function showFilterWarning() {
+  let warn = document.getElementById('filterWarn');
+  if (!warn) {
+    warn = document.createElement('div');
+    warn.id = 'filterWarn';
+    warn.style.cssText = 'font-size:10px;color:#ef4444;margin-top:3px;font-family:DM Mono;';
+    warn.textContent = '🔒 Gefiltert! NSFW-Inhalte nur nach Freischaltung verfügbar.';
+    document.querySelector('.extra').appendChild(warn);
+  }
+  warn.style.display = 'block';
+  setTimeout(() => { if(warn) warn.style.display = 'none'; }, 3000);
+}
+
+function updatePrompt() {
+  const order = ['geschlecht','alter','groesse','bau','hautton','gesichtsform','augenform','augenfarbe','nase','mund','haarlaenge','frisur','haarfarbe','taille','brust','huefte','beine','arme','oberteil','unterteil','ganzkoerper','schlitz','ausschnittV','ausschnittH','kleiderfarbe','logo','schuhe','schuhfarbe','pose'];
+
+  const enParts = ['(photo-realistic:1.4)', 'ultra realistic 8k photograph', 'RAW photo', 'DSLR', 'sharp focus', 'natural lighting'];
+  const negParts = [];
+  const deParts = [];
+
+  const hasClothing = S['oberteil'] || S['unterteil'] || S['ganzkoerper'];
+  const bigBreasts = S['brust'] && (S['brust'].en.includes('large') || S['brust'].en.includes('huge'));
+
+  if (!nsfwOn) {
+    negParts.push('nudity', 'exposed breasts', 'nipples visible', 'exposed genitals', 'bare buttocks', 'naked');
+    if (hasClothing) negParts.push('clothing removed', 'wardrobe malfunction', 'dress falling off');
+    if (bigBreasts && hasClothing) {
+      enParts.push('large breasts fully covered by clothing, clothes fitting properly');
+      negParts.push('cleavage spillage', 'breasts popping out', 'nipples showing');
+    }
+  }
+
+  order.forEach(g => {
+    if (S[g]) { enParts.push(S[g].en); deParts.push(S[g].de); }
+  });
+
+  const extra = document.getElementById('extraInput').value.trim();
+  if (extra) enParts.push(extra);
+
+  window._posPrompt = enParts.filter(Boolean).join(', ');
+  window._negPrompt = negParts.join(', ');
+
+  document.getElementById('promptEN').textContent = window._posPrompt || 'Wähle Optionen...';
+  document.getElementById('promptDE').textContent = deParts.length ? '🇩🇪 ' + deParts.join(', ') : '🇩🇪 Noch keine Auswahl';
+}
+
+function showTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => {
+    p.classList.remove('active');
+    if (p.id !== 'tab-nsfw' || nsfwOn) p.style.display = '';
+  });
+  el.classList.add('active');
+  const panel = document.getElementById('tab-' + name);
+  panel.classList.add('active');
+  panel.style.display = 'flex';
+}
+
+function copyPrompt() {
+  const safePrompt = nsfwOn ? (window._posPrompt || '') : filterText(window._posPrompt || '');
+  navigator.clipboard.writeText(safePrompt).then(() => {
+    const btn = event.target; const orig = btn.textContent;
+    btn.textContent = '✓ Kopiert!';
+    setTimeout(() => btn.textContent = orig, 2000);
+  });
+}
+
+function usePrompt() {
+  if (window.api && window.api.sendPrompt) {
+    // Finaler Filter vor Übergabe
+    const safePrompt = nsfwOn ? (window._posPrompt || '') : filterText(window._posPrompt || '');
+    window.api.sendPrompt(safePrompt, window._negPrompt || '');
+    window.close();
+  }
+}
+
+function clearAll() {
+  Object.keys(S).forEach(k => delete S[k]);
+  document.querySelectorAll('.chip.on').forEach(c => c.classList.remove('on'));
+  document.getElementById('alterInput').value = '';
+  document.getElementById('groesseInput').value = '';
+  document.getElementById('alterTag').textContent = '';
+  document.getElementById('groesseTag').textContent = '';
+  document.getElementById('extraInput').value = '';
+  updatePrompt();
+}
+
+updatePrompt();
+</script>
+</body>
+</html>
