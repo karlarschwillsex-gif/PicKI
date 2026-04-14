@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PicKI-Elements – Body Editor</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700;900&family=Share+Tech+Mono&display=swap');
+:root{--bg:#06080f;--surface:#0c0f1a;--card:#111827;--border:#1e2535;--accent:#7c5cfc;--accent2:#fc5c9c;--text:#e8eaf6;--muted:#4a5280;}
+body.nsfw{--accent:#fc5c9c;--accent2:#ff2d78;--bg:#140818;--surface:#1a0820;--card:#1c0a28;--border:#3d1050;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;transition:background .5s;}
+.header{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;z-index:10;}
+.back-btn{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:7px 14px;color:var(--text);font-family:'Exo 2';font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;}
+.back-btn:hover{border-color:var(--accent);color:var(--accent);}
+.title{font-family:'Exo 2';font-weight:900;font-size:16px;}
+.title span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.nsfw-badge{display:none;font-family:'Share Tech Mono';font-size:10px;color:var(--accent2);background:rgba(252,92,156,0.08);border:1px solid rgba(252,92,156,0.27);padding:3px 10px;border-radius:20px;animation:pulse 2s infinite;}
+body.nsfw .nsfw-badge{display:block;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+.btn-next{padding:8px 20px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;color:white;font-family:'Exo 2';font-weight:700;font-size:13px;cursor:pointer;transition:all .15s;}
+.main{display:flex;flex:1;overflow:hidden;}
+.panel{width:240px;flex-shrink:0;background:var(--surface);display:flex;flex-direction:column;overflow-y:auto;z-index:10;}
+.panel::-webkit-scrollbar{width:3px;}
+.panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+.panel-left{border-right:1px solid var(--border);}
+.panel-right{border-left:1px solid var(--border);}
+.psec{padding:10px 12px;border-bottom:1px solid var(--border);}
+.psec-title{font-family:'Share Tech Mono';font-size:9px;color:var(--accent);letter-spacing:.15em;margin-bottom:8px;text-transform:uppercase;}
+.gender-row{display:flex;gap:4px;flex-wrap:wrap;}
+.gbtn{flex:1;min-width:45px;padding:6px 4px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--muted);font-family:'Exo 2';font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;text-align:center;}
+.gbtn.on{border-color:var(--accent);color:var(--accent);background:rgba(124,92,252,0.08);}
+/* Accordion */
+.acc-btn{width:100%;padding:9px 12px;background:var(--card);border:none;border-bottom:1px solid var(--border);color:var(--text);font-family:'Exo 2';font-size:12px;font-weight:700;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;transition:all .15s;}
+.acc-btn:hover,.acc-btn.active{color:var(--accent);background:rgba(124,92,252,0.05);}
+.acc-btn .arr{font-size:10px;transition:transform .2s;}
+.acc-btn.active .arr{transform:rotate(90deg);}
+.acc-content{display:none;padding:10px 12px;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.2);}
+.acc-content.open{display:block;}
+.acc-nsfw-btn{border-left:2px solid var(--accent2);color:var(--accent2)!important;}
+.acc-nsfw-btn:hover,.acc-nsfw-btn.active{color:var(--accent2)!important;background:rgba(252,92,156,0.05)!important;}
+/* Sliders */
+.srow{margin-bottom:8px;}
+.slabel{display:flex;justify-content:space-between;margin-bottom:3px;}
+.sname{font-size:11px;font-weight:600;color:var(--text);}
+.sval{font-family:'Share Tech Mono';font-size:11px;color:var(--accent);}
+input[type=range]{width:100%;-webkit-appearance:none;height:3px;border-radius:3px;background:var(--border);outline:none;cursor:pointer;display:block;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px rgba(124,92,252,0.56);cursor:pointer;}
+.sunit{font-size:9px;color:var(--muted);margin-top:2px;}
+select{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);padding:6px;border-radius:8px;font-family:'Exo 2';font-size:11px;cursor:pointer;margin-top:4px;}
+/* NSFW visibility */
+.nx{display:none;}
+body.nsfw .nx{display:block;}
+.safe-only{display:block;}
+body.nsfw .safe-only{display:none;}
+.fem-only{display:block;}
+.male-only{display:none;}
+.div-only{display:none;}
+body.gender-m .fem-only{display:none;}
+body.gender-m .male-only{display:block;}
+body.gender-d .fem-only{display:none;}
+body.gender-d .div-only{display:block;}
+body.gender-k .fem-only{display:none;}
+body.gender-k .div-only{display:block;}
+/* Center */
+.center{flex:1;display:flex;flex-direction:column;align-items:stretch;position:relative;overflow:hidden;}
+#mh-container{width:100%;height:100%;position:relative;}
+#mh-container canvas{position:absolute;inset:0;width:100%!important;height:100%!important;}
+.loading-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);z-index:5;transition:opacity .5s;}
+.loading-overlay.hidden{opacity:0;pointer-events:none;}
+.loading-text{font-family:'Share Tech Mono';font-size:12px;color:var(--accent);letter-spacing:.1em;margin-bottom:10px;text-align:center;padding:0 20px;}
+.loading-bar{width:200px;height:2px;background:var(--border);border-radius:2px;}
+.loading-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .3s;width:0%;}
+.hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-family:'Share Tech Mono';font-size:10px;color:var(--muted);z-index:5;pointer-events:none;white-space:nowrap;}
+.bottom{display:flex;gap:6px;padding:10px 16px;background:var(--surface);border-top:1px solid var(--border);z-index:10;}
+.pbtn{flex:1;padding:7px;border-radius:8px;font-family:'Exo 2';font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text);transition:all .15s;}
+.pbtn:hover{border-color:var(--accent);color:var(--accent);}
+.pbtn.save{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:white;}
+@media(max-width:700px){.panel{display:none;}}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <button class="back-btn" onclick="goHome()">← Zurück</button>
+  <div class="title">Body <span>Editor</span></div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="nsfw-badge">🔞 NSFW</div>
+    <button class="btn-next" onclick="goNext()">Schritt 1 →</button>
+  </div>
+</header>
+
+<div class="main">
+
+<!-- ═══ LEFT PANEL ═══ -->
+<div class="panel panel-left">
+
+  <!-- Geschlecht -->
+  <div class="psec">
+    <div class="psec-title">Geschlecht</div>
+    <div class="gender-row">
+      <div class="gbtn on" onclick="setGender('f',this)">♀ Frau</div>
+      <div class="gbtn" onclick="setGender('m',this)">♂ Mann</div>
+      <div class="gbtn" onclick="setGender('d',this)">⚧ Divers</div>
+      <div class="gbtn" onclick="setGender('k',this)">🦊 Kemi</div>
+    </div>
+  </div>
+
+  <!-- Körper -->
+  <button class="acc-btn active" onclick="acc('body',this)">🧍 Körper <span class="arr">▶</span></button>
+  <div class="acc-content open" id="acc-body">
+    <div class="srow"><div class="slabel"><span class="sname">Alter</span><span class="sval" id="v-age"></span></div>
+      <input id="sl-age" type="range" min="0" max="1" step="0.01" value="0.35" oninput="setAge(this.value)"></div>
+    <div class="srow"><div class="slabel"><span class="sname">Körpergröße</span><span class="sval" id="v-height">168 cm</span></div>
+      <input id="sl-height" type="range" min="0" max="1" step="0.01" value="0.5" oninput="setHeight(this.value)"></div>
+    <div class="srow"><div class="slabel"><span class="sname">Gewicht</span><span class="sval" id="v-weight">65 kg</span></div>
+      <input id="sl-weight" type="range" min="0" max="1" step="0.01" value="0.4" oninput="setWeight(this.value)"></div>
+    <div class="srow"><div class="slabel"><span class="sname">Muskel</span><span class="sval" id="v-muscle">50%</span></div>
+      <input id="sl-muscle" type="range" min="0" max="1" step="0.01" value="0.5" oninput="setMuscle(this.value)"></div>
+    <div class="srow"><div class="slabel"><span class="sname">Proportionen</span><span class="sval" id="v-prop">50%</span></div>
+      <input id="sl-prop" type="range" min="0" max="1" step="0.01" value="0.5" oninput="setProp(this.value)">
+      <div class="sunit">← 90er Model · Michelin Mann →</div></div>
+  </div>
+
+  <!-- Gebiets-DNA -->
+  <button class="acc-btn" onclick="acc('eth',this)">🌍 Gebiets-DNA <span class="arr">▶</span></button>
+  <div class="acc-content" id="acc-eth">
+    <div class="sunit" style="margin-bottom:6px;color:var(--accent)">Zusammen immer 100%</div>
+    <div class="srow"><div class="slabel"><span class="sname">Europäisch</span><span class="sval" id="v-eur">100%</span></div>
+      <input id="sl-eur" type="range" min="0" max="100" step="1" value="100" oninput="setEthnicity('eur',this.value)"></div>
+    <div class="srow"><div class="slabel"><span class="sname">Afrikanisch</span><span class="sval" id="v-afr">0%</span></div>
+      <input id="sl-afr" type="range" min="0" max="100" step="1" value="0" oninput="setEthnicity('afr',this.value)"></div>
+    <div class="srow"><div class="slabel"><span class="sname">Asiatisch</span><span class="sval" id="v-asi">0%</span></div>
+      <input id="sl-asi" type="range" min="0" max="100" step="1" value="0" oninput="setEthnicity('asi',this.value)"></div>
+  </div>
+
+  <!-- BRUST -->
+  <div class="fem-only">
+    <!-- SAFE: 3 Preset Buttons -->
+    <div class="safe-only">
+      <div class="psec">
+        <div class="psec-title">👙 Brust</div>
+        <div class="gender-row">
+          <div class="gbtn" onclick="breastPreset('flat',this)">Flach</div>
+          <div class="gbtn" onclick="breastPreset('handful',this)">Handvoll</div>
+          <div class="gbtn on" onclick="breastPreset('normal',this)">Normal</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NSFW: Volle Slider -->
+    <div class="nx">
+      <button class="acc-btn" onclick="acc('breast',this)">👙 Brust – Details <span class="arr">▶</span></button>
+      <div class="acc-content" id="acc-breast">
+        <div class="srow"><div class="slabel"><span class="sname">Größe</span><span class="sval" id="v-bsize">50%</span></div>
+          <input type="range" min="0" max="100" step="1" value="50" oninput="setBreastSize(this.value)"></div>
+        <div class="srow"><div class="slabel"><span class="sname">Festigkeit</span><span class="sval" id="v-bfirm">50</span></div>
+          <input type="range" min="0" max="1" step="0.01" value="0.5" oninput="setMod('breast/BreastFirmness',this.value,'bfirm')"></div>
+        <div class="srow"><div class="slabel"><span class="sname">Volumen</span><span class="sval" id="v-bvol">0</span></div>
+          <input type="range" min="-1" max="1" step="0.01" value="0" oninput="setMod('breast/breast-volume-vert-up|down',this.value,'bvol')"></div>
+        <div class="srow"><div class="slabel"><span class="sname">Vertikalpos.</span><span class="sval" id="v-btrans">0</span></div>
+          <input type="range" min="-1" max="1" step="0.01" value="0" oninput="setMod('breast/breast-trans-vert-down|up',this.value,'btrans')"></div>
+        <div class="srow"><div class="slabel"><span class="sname">Abstand</span><span class="sval" id="v-bdist">0</span></div>
+          <input type="range" min="-1" max="1" step="0.01" value="0" oninput="setMod('breast/breast-dist-min|max',this.value,'bdist')"></div>
+        <div class="srow"><div class="slabel"><span class="sname">Spitzigkeit</span><span class="sval" id="v-bpoint">0</span></div>
+          <input type="range" min="-1" max="1" step="0.01" value="0" oninput="setMod('breast/breast-point-min|max',this.value,'bpoint')"></div>
+      </div>
+
+      <button class="acc-btn acc-nsfw-btn" onclick="acc('nipple',this)">🔞 Brustwarzen <span class="arr">▶</span></button>
+      <div class="acc-content" id="acc-nipple">
+        <div class="srow"><div class="slabel"><span class="sname">Größe</span><span class="sval" id="v-nsize">0</span></div>
+          <input type="range" min="-1" max="1" step="0.01" value="0" oninput="setMod('breast/nipple-size-min|max',this.value,'nsize')"></div>
+        <div class="srow"><div class="slabel"><span class="sname">Spitze</span><span class="sval" id="v-npoint">0</span></div>
+          <input type="range" min="-1" max="1" step="0.01" value="0" oninput="setMod('breast/nipple-point-in|out',this.value,'npoint')"></div>
+      </div>
+
+      <button class="acc-btn acc-nsfw-btn" onclick="acc('intim-f',this)">🔞 Intim – Damen <span class="arr">▶</span></button>
+      <div class="acc-content" id="acc-intim-f">
+        <div class="srow"><div class="slabel"><span class="sname">Schamlippen</span><span class="sval" id="v-la">2</span></div>
+          <input type="range" min="1" max="5" value="2" oninput="u('la',this.value)">
+          <div class="sunit" id="laLabel">Natürlich</div></div>
+        <div class="srow"><div class="slabel"><span class="sname">Intimbehaarung</span><span class="sval" id="v-ph">1</span></div>
+          <input type="range" min="1" max="8" value="1" oninput="u('ph',this.value)">
+          <div class="sunit" id="phLabel">Babypopo 👶</div></div>
+        <div class="srow"><div class="slabel"><span class="sname">Haarfarbe</span><span class="sval" id="v-phc">1</span></div>
+          <input type="range" min="1" max="5" value="1" oninput="u('phc',this.value)">
+          <div class="sunit" id="phcLabel">Grau 👵</div></div>
+      </div>
+
+      <button class="acc-btn acc-nsfw-btn" onclick="acc('po-f',this)">🔞 Po – Details <span class="arr">▶</span></button>
+      <div class="acc-content" id="acc-po-f">
+        <div class="srow"><div class="slabel"><span class="sname">Volumen</span><span class="sval" id="v-bvol2">50%</span></div>
+          <input type="range" min="0" max="1" step="0.01" value="0.5" oninput="setButt(this.value)"></div>
+        <div class="srow"><div class="slabel"><span class="sname">Rundheit</span><span class="sval" id="v-bround">50%</span></div>
+          <input type="range" min="0" max="1" step="0.01" value="0.5" oninput="setMod2('pelvis/pelvis-tone-decr|incr',this.value,'bround')"></div>
+        <div class="srow"><div class="slabel"><span class="sname">Öffnung</span><span class="sval" id="v-bopen">0%</span></div>
+          <input type="range" min="0" max="1" step="0.01" value="0" oninput="setMod2('pelvis/bulge-decr|incr',this.value,'bopen')"></div>
+        <div class="sunit" style="color:var(--accent2)">... Wagenheber optional 😄</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NSFW Herren – nur beim Mann! -->
+  <div class="nx male-only">
+    <button class="acc-btn acc-nsfw-btn" onclick="acc('intim-m',this)">🔞 Intim – Herren <span class="arr">▶</span></button>
+    <div class="acc-content" id="acc-intim-m">
+      <div class="srow"><div class="slabel"><span class="sname">Länge 😄</span><span class="sval" id="v-pl">0</span></div>
+        <input type="range" min="-1" max="1" step="0.01" value="0" oninput="setMod('genitals/penis-length-min|max',this.value,'pl')">
+        <div class="sunit" id="plLabel">M</div></div>
+      <div class="srow"><div class="slabel"><span class="sname">Umfang</span><span class="sval" id="v-pc">0%</span></div>
+        <input type="range" min="-1" max="1" step="0.01" value="0" oninput="setMod('genitals/penis-circ-min|max',this.value,'pc')"></div>
+      <div class="srow"><div class="slabel"><span class="sname">Hodensack</span><span class="sval" id="v-sc">0</span></div>
+        <input type="range" min="-1" max="1" step="0.01" value="0" oninput="setMod('genitals/penis-testicles-min|max',this.value,'sc')">
+        <div class="sunit" id="scLabel">Normal</div></div>
+      <div class="srow"><div class="slabel"><span class="sname">Beschneidung</span><span class="sval" id="v-cut">1</span></div>
+        <input type="range" min="1" max="3" value="1" oninput="u('cut',this.value)">
+        <div class="sunit" id="cutLabel">Beschnitten ✂️</div></div>
+      <div class="srow"><div class="slabel"><span class="sname">Intimbehaarung</span><span class="sval" id="v-mhair">1</span></div>
+        <input type="range" min="1" max="8" value="1" oninput="u('mhair',this.value)">
+        <div class="sunit" id="mhairLabel">Babypopo 👶</div></div>
+    </div>
+  </div>
+
+  <!-- NSFW Divers -->
+  <div class="nx div-only">
+    <button class="acc-btn acc-nsfw-btn" onclick="acc('intim-d',this)">🔞 Intim – Divers <span class="arr">▶</span></button>
+    <div class="acc-content" id="acc-intim-d">
+      <div class="srow"><div class="slabel"><span class="sname">Schamlippen</span><span class="sval" id="v-dla">2</span></div>
+        <input type="range" min="1" max="5" value="2" oninput="u('dla',this.value)">
+        <div class="sunit" id="dlaLabel">Natürlich</div></div>
+      <div class="srow"><div class="slabel"><span class="sname">Länge 😄</span><span class="sval" id="v-dpl">0</span></div>
+        <input type="range" min="-1" max="1" step="0.01" value="0" oninput="setMod('genitals/penis-length-min|max',this.value,'dpl')"></div>
+      <div class="srow"><div class="slabel"><span class="sname">Intimbehaarung</span><span class="sval" id="v-dph">1</span></div>
+        <input type="range" min="1" max="8" value="1" oninput="u('dph',this.value)">
+        <div class="sunit" id="dphLabel">Babypopo 👶</div></div>
+    </div>
+  </div>
+
+</div><!-- END LEFT PANEL -->
+
+<!-- ═══ CENTER ═══ -->
+<div class="center">
+  <div id="mh-container"></div>
+  <div class="loading-overlay" id="loading">
+    <div class="loading-text" id="loadText">🔄 Initialisiere...</div>
+    <div class="loading-bar"><div class="loading-fill" id="loadFill"></div></div>
+  </div>
+  <div class="hint">🖱 Ziehen = Rotieren · Scroll = Zoom · Shift+Scroll = Höhe</div>
+  <button onclick="resetCamera()" style="position:absolute;bottom:32px;right:10px;background:rgba(12,15,26,0.8);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'Share Tech Mono';font-size:10px;padding:4px 10px;cursor:pointer;z-index:5;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">⌂ Kamera Reset</button>
+</div>
+
+<!-- ═══ RIGHT PANEL ═══ -->
+<div class="panel panel-right">
+
+  <!-- Hüfte & Beine -->
+  <button class="acc-btn" onclick="acc('legs',this)">🦵 Hüfte & Beine <span class="arr">▶</span></button>
+  <div class="acc-content" id="acc-legs">
+    <div class="srow"><div class="slabel"><span class="sname">Hüfte Breite</span><span class="sval" id="v-hip">50%</span></div>
+      <input type="range" min="0" max="1" step="0.01" value="0.5" oninput="setHip(this.value)"></div>
+    <div class="srow fem-only"><div class="slabel"><span class="sname">Po Volumen</span><span class="sval" id="v-butt">50%</span></div>
+      <input type="range" min="0" max="1" step="0.01" value="0.5" oninput="setButt(this.value)"></div>
+    <div class="srow"><div class="slabel"><span class="sname">Oberschenkel</span><span class="sval" id="v-uleg">50%</span></div>
+      <input type="range" min="0" max="1" step="0.01" value="0.5" oninput="setUpperLeg(this.value)"></div>
+    <div class="srow"><div class="slabel"><span class="sname">Unterschenkel</span><span class="sval" id="v-lleg">50%</span></div>
+      <input type="range" min="0" max="1" step="0.01" value="0.5" oninput="setLowerLeg(this.value)"></div>
+    <div class="srow"><div class="slabel"><span class="sname">Wadenumfang</span><span class="sval" id="v-calf">50%</span></div>
+      <input type="range" min="0" max="1" step="0.01" value="0.5" oninput="setMod2('measure/measure-calf-decrease|increase',this.value,'calf')"></div>
+  </div>
+
+  <!-- Arme -->
+  <button class="acc-btn" onclick="acc('arms',this)">💪 Arme & Hände <span class="arr">▶</span></button>
+  <div class="acc-content" id="acc-arms">
+    <div class="srow"><div class="slabel"><span class="sname">Oberarm</span><span class="sval" id="v-uarm">50%</span></div>
+      <input type="range" min="0" max="1" step="0.01" value="0.5" oninput="setUpperArm(this.value)"></div>
+    <div class="srow"><div class="slabel"><span class="sname">Unterarm</span><span class="sval" id="v-larm">50%</span></div>
+      <input type="range" min="0" max="1" step="0.01" value="0.5" oninput="setLowerArm(this.value)"></div>
+    <div class="srow"><div class="slabel"><span class="sname">Armumfang</span><span class="sval" id="v-armc">50%</span></div>
+      <input type="range" min="0" max="1" step="0.01" value="0.5" oninput="setMod2('measure/measure-upperarm-decrease|increase',this.value,'armc')"></div>
+    <div class="srow"><div class="slabel"><span class="sname">Handgröße</span><span class="sval" id="v-hand">50%</span></div>
+      <input type="range" min="0" max="1" step="0.01" value="0.5" oninput="setHand(this.value)"></div>
+  </div>
+
+  <!-- Pose -->
+  <button class="acc-btn" onclick="acc('pose',this)">💃 Pose <span class="arr">▶</span></button>
+  <div class="acc-content" id="acc-pose">
+    <select id="poseSelect" onchange="setPose(this.value)">
+      <option value="apose" selected>A-Pose</option>
+      <option value="standing01">Standing 1</option>
+      <option value="standing02">Standing 2</option>
+      <option value="standing03">Standing 3</option>
+      <option value="standing04">Standing 4</option>
+      <option value="standing05">Standing 5</option>
+    </select>
+  </div>
+
+  <!-- Haare Mann -->
+  <div class="male-only">
+    <button class="acc-btn" onclick="acc('hair-m',this)">🧔 Haare & Bart <span class="arr">▶</span></button>
+    <div class="acc-content" id="acc-hair-m">
+      <div class="srow"><div class="slabel"><span class="sname">Bart</span><span class="sval" id="v-beard">0</span></div>
+        <input type="range" min="0" max="5" value="0" oninput="u('beard',this.value)">
+        <div class="sunit" id="beardLabel">Glattrasiert</div></div>
+      <div class="srow"><div class="slabel"><span class="sname">Körperbehaarung</span><span class="sval" id="v-bodyhair">1</span></div>
+        <input type="range" min="1" max="5" value="1" oninput="u('bodyhair',this.value)">
+        <div class="sunit" id="bodyhairLabel">Babypopo 👶</div></div>
+    </div>
+  </div>
+
+</div><!-- END RIGHT PANEL -->
+
+</div>
+
+<div class="bottom">
+  <button class="pbtn" onclick="resetAll()">↺ Reset</button>
+  <button class="pbtn" onclick="goHome()">📂 Projekte</button>
+  <button class="pbtn save" onclick="saveProfile()">💾 Speichern</button>
+  <button class="pbtn" onclick="genPrompt()">✦ Prompt</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r82/three.js"></script>
+<script src="js/makehuman.js"></script>
+<script>
+let human = null, currentGender = 'f', nsfw = false;
+const B = {gender:'f', skin:3, la:2, ph:1, dla:2, dph:1, dpl:0, mhair:1, beard:0, bodyhair:1};
+
+const skL = ['Sehr hell','Hell','Mittel','Olive','Gebräunt','Dunkel','Sehr dunkel'];
+const skinColors = [
+  {r:0.98,g:0.91,b:0.85},{r:0.96,g:0.78,b:0.66},{r:0.91,g:0.67,b:0.48},
+  {r:0.78,g:0.47,b:0.28},{r:0.63,g:0.34,b:0.16},{r:0.44,g:0.22,b:0.09},{r:0.25,g:0.09,b:0.03}
+];
+const laL  = ['–','Innenliegend','Natürlich','Ausgeprägt','Kinderzelt ⛺','Schon wieder Oktoberfest? 🍺'];
+const phL  = ['–','Babypopo 👶','Gewachst','Landebahn ✈️','Dreieck','Getrimmt','Natürlich','Wilder Garten 🌿','Dschungel 🌴'];
+const cutL = ['–','Beschnitten ✂️','Naturbelassen','Rollkragenpulli 🧶'];
+const bhL  = ['–','Babypopo 👶','Wenig','Mittel','Viel','Sehr viel'];
+const phcL = ['–','Grau 👵','Blond','Fuchsrot 🦊','Braun','Schwarz'];
+
+// Accordion
+function acc(id, btn) {
+  const el = document.getElementById('acc-' + id);
+  if (!el) return;
+  const isOpen = el.classList.contains('open');
+  // Alle schließen
+  document.querySelectorAll('.acc-content.open').forEach(c => c.classList.remove('open'));
+  document.querySelectorAll('.acc-btn.active').forEach(b => b.classList.remove('active'));
+  // Geklicktes nur öffnen wenn es vorher zu war
+  if (!isOpen) {
+    el.classList.add('open');
+    btn.classList.add('active');
+  }
+}
+
+// Three.js
+const container = document.getElementById('mh-container');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 2000);
+camera.position.set(0, 8, 40);
+const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setClearColor(0,0);
+container.appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xffffbb, 0x080820, 1));
+const dl = new THREE.DirectionalLight(0xffffff, 0.5);
+dl.position.set(0,140,500); scene.add(dl);
+const sl = new THREE.DirectionalLight(0xffffff, 0.5);
+sl.position.set(13,5,0); scene.add(sl);
+const rl = new THREE.DirectionalLight(0x7c5cfc, 0.4);
+rl.position.set(-10,5,-5); scene.add(rl);
+
+const OT = new THREE.Vector3(0,12,0);
+let isDrag=false, pX=0, pY=0;
+renderer.domElement.addEventListener('mousedown', e=>{isDrag=true;pX=e.clientX;pY=e.clientY;});
+renderer.domElement.addEventListener('mouseup', ()=>isDrag=false);
+renderer.domElement.addEventListener('mouseleave', ()=>isDrag=false);
+renderer.domElement.addEventListener('mousemove', e=>{
+  if(!isDrag) return;
+  const dx=(e.clientX-pX)*0.01;
+  // Nur horizontal rotieren – kein vertikales Rutschen!
+  const off=camera.position.clone().sub(OT);
+  const s=new THREE.Spherical().setFromVector3(off);
+  s.theta-=dx;
+  // phi NICHT ändern beim Drehen – verhindert Rutschen
+  camera.position.copy(OT).add(new THREE.Vector3().setFromSpherical(s));
+  camera.lookAt(OT);
+  pX=e.clientX; pY=e.clientY;
+});
+renderer.domElement.addEventListener('wheel', e=>{
+  if(e.shiftKey){
+    // Shift+Scroll = Kamera Höhe ändern
+    OT.y=Math.max(0,Math.min(25,OT.y-e.deltaY*0.05));
+    camera.lookAt(OT);
+  } else {
+    // Normal Scroll = Zoom
+    const dir=camera.position.clone().sub(OT).normalize();
+    const d=Math.max(10,Math.min(80,camera.position.distanceTo(OT)+e.deltaY*0.05));
+    camera.position.copy(OT).add(dir.multiplyScalar(d));
+  }
+  e.preventDefault();
+},{passive:false});
+
+function onResize(){
+  const w=container.clientWidth, h=container.clientHeight;
+  renderer.setSize(w,h); camera.aspect=w/h; camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', onResize);
+onResize();
+
+(function animate(){
+  requestAnimationFrame(animate);
+  if(human){human.onBeforeRender&&human.onBeforeRender();renderer.render(scene,camera);human.onAfterRender&&human.onAfterRender();}
+  else renderer.render(scene,camera);
+})();
+
+// MakeHuman
+function initHuman(){
+  const lt=document.getElementById('loadText'), lf=document.getElementById('loadFill');
+  const BASE='mhdata/data/';
+  lt.textContent='🔄 Lade Ressourcen...'; lf.style.width='10%';
+  const loader=new THREE.XHRLoader();
+  const loadJson=url=>new Promise((res,rej)=>loader.load(url,d=>res(JSON.parse(d)),undefined,rej));
+
+  loadJson(BASE+'resources.json').then(res=>{
+    lf.style.width='30%'; lt.textContent='🔄 Erstelle Charakter...';
+    res.baseUrl=BASE;
+    human=new makehuman.Human(res);
+    scene.add(human);
+    lf.style.width='50%'; lt.textContent='🔄 Lade Modell...';
+    return human.loadModel().then(()=>{
+      lf.style.width='70%';
+      setModDirect('macrodetails/Gender',0);
+      setModDirect('macrodetails/Age',0.5);
+      setModDirect('macrodetails-universal/Weight',0.4);
+      setModDirect('macrodetails-universal/Muscle',0.5);
+      setModDirect('macrodetails-height/Height',0.5);
+      setModDirect('macrodetails/Caucasian',1.0);
+      setModDirect('macrodetails/African',0);
+      setModDirect('macrodetails/Asian',0);
+      // Standard: A-Pose
+      human.setPose&&human.setPose('apose');
+      // Standard: Brust auf Flach
+      setModDirect('breast/BreastSize', adminPresets.flat.size);
+      setModDirect('breast/BreastFirmness', adminPresets.flat.firm);
+
+      // Kamera-Zielpunkt auf Modell-Mitte setzen nach dem Laden
+      const box=new THREE.Box3().setFromObject(human);
+      const center=box.getCenter(new THREE.Vector3());
+      OT.set(0, center.y, 0);
+      camera.lookAt(OT);
+
+      updateNsfwParts();
+      lt.textContent='🔄 Lade Morphs (~30 Sek.)...'; lf.style.width='80%';
+      return human.loadTargets(`${BASE}targets/${res.targets}`);
+    });
+  }).then(()=>{
+    lf.style.width='100%';
+    updateNsfwParts();
+    setTimeout(()=>document.getElementById('loading').classList.add('hidden'),500);
+  }).catch(e=>{
+    console.error(e);
+    lt.innerHTML=`⚠️ Fehler: ${e.message}`;
+    lf.style.background='#ef4444'; lf.style.width='100%';
+  });
+}
+
+function setModDirect(name,val){
+  if(!human) return;
+  const m=human.modifiers.children[name];
+  if(m){m.setValue(val);m.updateValue&&m.updateValue();}
+}
+function setMod(name,val,key){
+  const v=parseFloat(val);
+  const el=document.getElementById('v-'+key);
+  if(el) el.textContent=Math.round(v*100)+'%';
+  setModDirect(name,v);
+}
+
+// Alter ohne Zahlen
+function setAge(val){
+  const v=parseFloat(val);
+  setModDirect('macrodetails/Age',v);
+}
+
+// Körpergröße: 0=140cm, 1=200cm
+function setHeight(val){
+  const v=parseFloat(val);
+  const cm=Math.round(140+v*60);
+  document.getElementById('v-height').textContent=cm+' cm';
+  setModDirect('macrodetails-height/Height',v);
+  // Gewicht physikalisch anpassen (BMI ~22)
+  const bmi22weight=Math.round(22*(cm/100)**2);
+  document.getElementById('v-weight').textContent=bmi22weight+' kg';
+  // Slider nicht zwingen, nur Anzeige anpassen
+}
+
+// Gewicht: 0=sehr dünn, 1=sehr schwer
+function setWeight(val){
+  const v=parseFloat(val);
+  const hVal=parseFloat(document.getElementById('sl-height').value||0.5);
+  const cm=140+hVal*60;
+  const minKg=Math.round(18.5*(cm/100)**2);
+  const maxKg=Math.round(40*(cm/100)**2);
+  const kg=Math.round(minKg+v*(maxKg-minKg));
+  document.getElementById('v-weight').textContent=kg+' kg';
+  setModDirect('macrodetails-universal/Weight',v);
+}
+
+// Muskel
+function setMuscle(val){
+  const v=parseFloat(val);
+  document.getElementById('v-muscle').textContent=Math.round(v*100)+'%';
+  setModDirect('macrodetails-universal/Muscle',v);
+}
+
+// Proportionen: invertiert! mehr Slider = Michelin, weniger = 90er Model
+function setProp(val){
+  const v=parseFloat(val);
+  document.getElementById('v-prop').textContent=Math.round(v*100)+'%';
+  // Invertiert: 1-v weil mehr Slider = mehr Körper
+  setModDirect('macrodetails-proportions/BodyProportions', 1-v);
+}
+
+// Ethnizität – zusammen immer 100%
+function setEthnicity(changed, val){
+  let eur=parseInt(document.getElementById('sl-eur').value);
+  let afr=parseInt(document.getElementById('sl-afr').value);
+  let asi=parseInt(document.getElementById('sl-asi').value);
+
+  if(changed==='eur') eur=parseInt(val);
+  if(changed==='afr') afr=parseInt(val);
+  if(changed==='asi') asi=parseInt(val);
+
+  const total=eur+afr+asi;
+  if(total>100){
+    const over=total-100;
+    if(changed!=='eur') eur=Math.max(0,eur-over*(eur/(afr+asi||1)));
+    if(changed!=='afr') afr=Math.max(0,afr-over*(afr/(eur+asi||1)));
+    if(changed!=='asi') asi=Math.max(0,asi-over*(asi/(eur+afr||1)));
+    // Reste auf 100 normalisieren
+    const tot2=Math.round(eur)+Math.round(afr)+Math.round(asi);
+    if(tot2>100){if(changed!=='eur') eur=Math.max(0,Math.round(eur)-(tot2-100));}
+  }
+
+  eur=Math.round(eur); afr=Math.round(afr); asi=Math.round(asi);
+  const remaining=100-eur-afr-asi;
+  if(changed!=='eur') eur=Math.max(0,eur+remaining);
+
+  document.getElementById('sl-eur').value=eur;
+  document.getElementById('sl-afr').value=afr;
+  document.getElementById('sl-asi').value=asi;
+  document.getElementById('v-eur').textContent=eur+'%';
+  document.getElementById('v-afr').textContent=afr+'%';
+  document.getElementById('v-asi').textContent=asi+'%';
+
+  setModDirect('macrodetails/African', afr/100);
+  setModDirect('macrodetails/Asian', asi/100);
+  setModDirect('macrodetails/Caucasian', eur/100);
+}
+
+function setGender(g,el){
+  currentGender=g; B.gender=g;
+  document.querySelectorAll('.gbtn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  document.body.classList.remove('gender-f','gender-m','gender-d','gender-k');
+  document.body.classList.add('gender-'+g);
+  setModDirect('macrodetails/Gender',g==='m'?1:0);
+}
+function setSkin(v){
+  const idx=Math.min(parseInt(v)-1,6);
+  B.skin=parseInt(v);
+  document.getElementById('v-skin').textContent=v;
+  document.getElementById('skinLabel').textContent=skL[idx];
+  if(!human) return;
+  // MakeHuman setSkin mit echten Skin-Dateinamen
+  if(human.setSkin && human.skins && human.skins.length>0){
+    console.log('Verfügbare Skins:', human.skins);
+    const skinIdx=Math.round(idx/6*(human.skins.length-1));
+    human.setSkin(human.skins[skinIdx]);
+  }
+}
+
+function setPose(name){if(human&&human.setPose)human.setPose(name);}
+
+// Gewicht + Muskel – korrekte Namen aus Modifier-Liste
+function setWeight(val){
+  const v=parseFloat(val);
+  const hVal=parseFloat(document.getElementById('sl-height').value||0.5);
+  const cm=140+hVal*60;
+  const minKg=Math.round(18.5*(cm/100)**2);
+  const maxKg=Math.round(40*(cm/100)**2);
+  const kg=Math.round(minKg+v*(maxKg-minKg));
+  document.getElementById('v-weight').textContent=kg+' kg';
+  setModDirect('macrodetails-universal/Weight',v);
+}
+function setMuscle(val){
+  const v=parseFloat(val);
+  document.getElementById('v-muscle').textContent=Math.round(v*100)+'%';
+  setModDirect('macrodetails-universal/Muscle',v);
+}
+
+// Generischer Modifier-Setter mit Display
+function setMod2(name, val, key){
+  const v=parseFloat(val);
+  const el=document.getElementById('v-'+key);
+  if(el) el.textContent=Math.round(v*100)+'%';
+  setModDirect(name, v);
+}
+
+// Hüfte, Po, Beine, Arme – korrekte Namen
+function setHip(val){
+  const v=parseFloat(val);
+  document.getElementById('v-hip').textContent=Math.round(v*100)+'%';
+  setModDirect('hip/hip-scale-horiz-decr|incr', v);
+}
+function setButt(val){
+  const v=parseFloat(val);
+  const el=document.getElementById('v-butt');
+  if(el) el.textContent=Math.round(v*100)+'%';
+  const el2=document.getElementById('v-bvol2');
+  if(el2) el2.textContent=Math.round(v*100)+'%';
+  setModDirect('buttocks/buttocks-volume-decr|incr', v);
+}
+function setLeg(val){
+  const v=parseFloat(val);
+  document.getElementById('v-leg').textContent=Math.round(v*100)+'%';
+  setModDirect('legs/legs-upperlegheight-decr|incr', v);
+  setModDirect('legs/legs-lowerlegheight-decr|incr', v);
+}
+function setUpperLeg(val){
+  const v=parseFloat(val);
+  document.getElementById('v-uleg').textContent=Math.round(v*100)+'%';
+  setModDirect('legs/legs-upperlegheight-decr|incr', v);
+}
+function setLowerLeg(val){
+  const v=parseFloat(val);
+  document.getElementById('v-lleg').textContent=Math.round(v*100)+'%';
+  setModDirect('legs/legs-lowerlegheight-decr|incr', v);
+}
+function setUpperArm(val){
+  const v=parseFloat(val);
+  document.getElementById('v-uarm').textContent=Math.round(v*100)+'%';
+  setModDirect('measure/measure-upperarmlenght-decrease|increase', v);
+}
+function setLowerArm(val){
+  const v=parseFloat(val);
+  document.getElementById('v-larm').textContent=Math.round(v*100)+'%';
+  setModDirect('measure/measure-lowerarmlenght-decrease|increase', v);
+}
+function setArm(val){
+  const v=parseFloat(val);
+  document.getElementById('v-arm').textContent=Math.round(v*100)+'%';
+  setModDirect('measure/measure-upperarmlenght-decrease|increase', v);
+  setModDirect('measure/measure-lowerarmlenght-decrease|increase', v);
+}
+function setHand(val){
+  const v=parseFloat(val);
+  document.getElementById('v-hand').textContent=Math.round(v*100)+'%';
+  setModDirect('armslegs/r-hand-scale-decr|incr', v);
+  setModDirect('armslegs/l-hand-scale-decr|incr', v);
+}
+
+// Brust Größe: 0-100% UI → 0.6-1.5 intern
+function setBreastSize(val){
+  const v=parseInt(val);
+  document.getElementById('v-bsize').textContent=v+'%';
+  const internal=0.6+(v/100)*0.9;
+  setModDirect('breast/BreastSize', Math.min(1.5, internal));
+}
+
+// Brust Presets (BARBIE MODUS) - nutzt adminPresets
+function breastPreset(preset, el){
+  el.closest('.gender-row').querySelectorAll('.gbtn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  adminApply(preset);
+}
+
+function updateNsfwParts(){
+  if(!human) return;
+  const isFemale = currentGender==='f';
+  const isMale = currentGender==='m';
+
+  if(human.bodyPartOpacity){
+    // Nippel: nur im NSFW sichtbar
+    human.bodyPartOpacity(nsfw?1:0,'nipple');
+    // Penis: nur beim Mann im NSFW
+    human.bodyPartOpacity((nsfw&&isMale)?1:0,'helper-genital');
+    human.bodyPartOpacity((nsfw&&isMale)?1:0,'genitals');
+    // Bei Frau alles genital verstecken
+    if(isFemale){
+      human.bodyPartOpacity(0,'helper-genital');
+      human.bodyPartOpacity(0,'genitals');
+    }
+  }
+
+  // Augen: Barbie=normal, NSFW=rot
+  if(human.mesh&&human.mesh.material&&human.mesh.material.materials){
+    human.mesh.material.materials.forEach(mat=>{
+      if(!mat) return;
+      const n=(mat.name||'').toLowerCase();
+      if(n==='helper-r-eye'||n==='helper-l-eye'){
+        mat.color.setRGB(nsfw?0.7:1, nsfw?0.05:1, nsfw?0.05:1);
+        mat.needsUpdate=true;
+      }
+    });
+  }
+}
+
+function u(k,v){
+  B[k]=parseFloat(v);
+  const el=document.getElementById('v-'+k);
+  if(el) el.textContent=v;
+  const map={
+    la:['laLabel',laL], ph:['phLabel',phL], dla:['dlaLabel',laL], dph:['dphLabel',phL],
+    mhair:['mhairLabel',phL], beard:['beardLabel',bdL], bodyhair:['bodyhairLabel',bhL],
+    cut:  ['cutLabel',  cutL], phc: ['phcLabel', phcL],
+  };
+  if(map[k]){
+    const [lid,arr]=map[k];
+    const lel=document.getElementById(lid);
+    if(lel) lel.textContent=arr[Math.round(v)]||v;
+  }
+}
+
+
+// Admin Presets – aus localStorage laden falls vorhanden
+const defaultPresets = {
+  flat:    {size:0.35, firm:1.0,  vol:0,    dist:0,    point:0},
+  handful: {size:0.57, firm:0.50, vol:0,    dist:-0.2, point:0},
+  normal:  {size:0.65, firm:0.50, vol:0,    dist:-0.3, point:0},
+};
+let adminPresets;
+try {
+  const saved=localStorage.getItem('picki_breast_presets');
+  adminPresets=saved?JSON.parse(saved):JSON.parse(JSON.stringify(defaultPresets));
+} catch(e){
+  adminPresets=JSON.parse(JSON.stringify(defaultPresets));
+}
+
+document.addEventListener('keydown', e=>{
+  // NSFW Toggle: Ctrl+Shift+N
+  if(e.ctrlKey&&e.shiftKey&&e.key==='N'){
+    e.preventDefault(); nsfw=!nsfw;
+    document.body.classList.toggle('nsfw',nsfw);
+    updateNsfwParts();
+    if(window.api) window.api.setNsfwMode(nsfw);
+  }
+  // Admin Panel: Ctrl+Shift+A
+  if(e.ctrlKey&&e.shiftKey&&e.key==='A'){
+    e.preventDefault(); toggleAdminPanel();
+  }
+  // DevTools: Ctrl+Shift+D
+  if(e.ctrlKey&&e.shiftKey&&e.key==='D'){
+    e.preventDefault();
+    if(window.api&&window.api.toggleDevTools) window.api.toggleDevTools();
+  }
+  // Reload: Ctrl+Shift+R
+  if(e.ctrlKey&&e.shiftKey&&e.key==='R'){
+    e.preventDefault(); location.reload();
+  }
+});
+if(window.api?.onNsfwMode) window.api.onNsfwMode(on=>{
+  nsfw=on; document.body.classList.toggle('nsfw',on); updateNsfwParts();
+});
+
+// ═══ ADMIN PANEL ═══
+function toggleAdminPanel(){
+  let panel=document.getElementById('admin-panel');
+  if(panel){ panel.remove(); return; }
+  panel=document.createElement('div');
+  panel.id='admin-panel';
+  panel.style.cssText=`position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+    background:#0c0f1a;border:2px solid #fc5c9c;border-radius:16px;padding:20px;z-index:9999;
+    width:360px;max-height:80vh;overflow-y:auto;box-shadow:0 0 40px rgba(252,92,156,0.4);
+    font-family:'Exo 2',sans-serif;color:#e8eaf6;cursor:default;`;
+
+  // Draggable logic
+  let dx=0,dy=0,mx=0,my=0,dragging=false;
+  panel.addEventListener('mousedown', e=>{
+    if(e.target.tagName==='INPUT'||e.target.tagName==='BUTTON') return;
+    dragging=true;
+    mx=e.clientX; my=e.clientY;
+    // Convert from centered transform to absolute position first
+    const rect=panel.getBoundingClientRect();
+    panel.style.transform='none';
+    panel.style.left=rect.left+'px';
+    panel.style.top=rect.top+'px';
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e=>{
+    if(!dragging) return;
+    dx=e.clientX-mx; dy=e.clientY-my;
+    mx=e.clientX; my=e.clientY;
+    panel.style.left=(panel.offsetLeft+dx)+'px';
+    panel.style.top=(panel.offsetTop+dy)+'px';
+  });
+  document.addEventListener('mouseup', ()=>dragging=false);
+
+  const presetNames={flat:'Flach',handful:'Handvoll',normal:'Normal'};
+  const propNames={size:'Größe',firm:'Festigkeit',vol:'Volumen',dist:'Abstand',point:'Spitzigkeit'};
+
+  let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;cursor:move;user-select:none;">
+    <span style="font-weight:900;font-size:15px;background:linear-gradient(135deg,#7c5cfc,#fc5c9c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⚙️ ADMIN PANEL &nbsp;<span style="font-size:9px;color:#4a5280;-webkit-text-fill-color:#4a5280;">⠿ ziehen</span></span>
+    <button onclick="document.getElementById('admin-panel').remove()" style="background:none;border:none;color:#4a5280;font-size:20px;cursor:pointer;line-height:1;">✕</button>
+  </div>
+  <div style="font-family:'Share Tech Mono';font-size:9px;color:#fc5c9c;letter-spacing:.15em;margin-bottom:8px;">👙 BRUST PRESET EDITOR</div>
+  <div id="admin-active-preset" style="font-family:'Share Tech Mono';font-size:10px;color:#22c55e;margin-bottom:12px;min-height:16px;">
+    ← Slider bewegen = Live Vorschau am Modell
+  </div>`;
+
+  for(const preset of ['flat','handful','normal']){
+    html+=`<div style="background:#111827;border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid #1e2535;">
+      <div style="font-weight:700;font-size:13px;margin-bottom:10px;color:#7c5cfc;">${presetNames[preset]}</div>`;
+    for(const prop of ['size','firm','vol','dist','point']){
+      const val=adminPresets[preset][prop];
+      const min=prop==='vol'||prop==='dist'||prop==='point'?-1:0;
+      const max=1;
+      html+=`<div style="margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px;">
+          <span style="color:#e8eaf6;">${propNames[prop]}</span>
+          <span id="adv-${preset}-${prop}" style="font-family:'Share Tech Mono';color:#fc5c9c;">${Math.round(val*100)}%</span>
+        </div>
+        <input type="range" min="${min}" max="1" step="0.01" value="${val}"
+          oninput="adminUpdate('${preset}','${prop}',this.value)"
+          style="width:100%;-webkit-appearance:none;height:3px;border-radius:3px;background:#1e2535;outline:none;cursor:pointer;">
+      </div>`;
+    }
+    html+=`<div style="margin-top:8px;">
+      <button onclick="adminSave('${preset}',this)" style="width:100%;padding:7px;background:linear-gradient(135deg,#7c5cfc,#fc5c9c);border:none;border-radius:8px;color:white;font-family:'Exo 2';font-size:11px;font-weight:700;cursor:pointer;">
+        💾 Als ${presetNames[preset]} speichern
+      </button>
+    </div></div>`;
+  }
+
+  html+=`<div style="font-family:'Share Tech Mono';font-size:9px;color:#4a5280;text-align:center;margin-top:4px;">
+    Ctrl+Shift+A = schließen &nbsp;·&nbsp; Ctrl+Shift+D = DevTools &nbsp;·&nbsp; Ctrl+Shift+R = Reload
+  </div>`;
+
+  panel.innerHTML=html;
+  document.body.appendChild(panel);
+}
+
+function adminUpdate(preset, prop, val){
+  adminPresets[preset][prop]=parseFloat(val);
+  const el=document.getElementById(`adv-${preset}-${prop}`);
+  if(el) el.textContent=Math.round(parseFloat(val)*100)+'%';
+  // Live Vorschau – Modell wird sofort aktualisiert!
+  adminApply(preset);
+  // Aktives Preset merken damit man weiß was man sieht
+  document.getElementById('admin-active-preset').textContent = 
+    '👁 Live: ' + {flat:'Flach',handful:'Handvoll',normal:'Normal'}[preset];
+}
+
+function adminApply(preset){
+  const p=adminPresets[preset];
+  // Größe: Slider 0-100 → intern 0.6-1.5
+  const sizeInternal = 0.6 + (p.size * 0.9);
+  setModDirect('breast/BreastSize',    Math.min(1.5, sizeInternal));
+  setModDirect('breast/BreastFirmness',p.firm);
+  setModDirect('breast/breast-volume-vert-up|down', p.vol);
+  setModDirect('breast/breast-dist-min|max',        p.dist);
+  setModDirect('breast/breast-point-min|max',       p.point);
+}
+
+function adminSave(preset, btn){
+  // In localStorage speichern = bleibt auch nach Neustart!
+  try {
+    localStorage.setItem('picki_breast_presets', JSON.stringify(adminPresets));
+    btn.style.background='#22c55e';
+    btn.textContent='✓ Gespeichert!';
+    setTimeout(()=>{
+      btn.style.background='linear-gradient(135deg,#7c5cfc,#fc5c9c)';
+      btn.textContent='💾 Speichern';
+    },1500);
+  } catch(e){
+    btn.textContent='⚠️ Fehler!';
+  }
+}
+
+function resetCamera(){
+  OT.set(0, 12, 0);
+  camera.position.set(0, 8, 40);
+  camera.lookAt(OT);
+  // Kamera auf Modell-Mitte neu ausrichten
+  if(human){
+    const box=new THREE.Box3().setFromObject(human);
+    const center=box.getCenter(new THREE.Vector3());
+    OT.set(0, center.y, 0);
+    camera.lookAt(OT);
+  }
+}
+
+function resetAll(){
+  if(human&&human.modifiers&&human.modifiers.reset) human.modifiers.reset();
+  document.querySelectorAll('input[type=range]').forEach(el=>el.value=el.defaultValue);
+}
+function saveProfile(){
+  if(!window.api) return;
+  const name=prompt('Profilname:','Mein Charakter')||'Charakter';
+  window.api.saveProject({name,bodyState:{...B},currentStep:0,
+    thumb:currentGender==='f'?'👩':currentGender==='m'?'👨':currentGender==='k'?'🦊':'⚧'
+  }).then(r=>{if(r?.success)alert('✓ Gespeichert!');});
+}
+function genPrompt(){
+  const gMap={f:'woman',m:'man',d:'non-binary person',k:'kemonomimi character'};
+  const p=[gMap[currentGender],skL[Math.min(B.skin-1,6)]+' skin tone'].join(', ');
+  navigator.clipboard.writeText(p).catch(()=>{});
+  alert('✓ Prompt kopiert:\n\n'+p);
+}
+function goHome(){if(window.api)window.api.navigate('home');else history.back();}
+function goNext(){if(window.api)window.api.navigate('step1');}
+
+initHuman();
+</script>
+</body>
+</html>

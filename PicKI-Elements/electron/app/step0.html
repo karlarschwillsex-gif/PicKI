@@ -3,426 +3,122 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>PicKI-Elements – Body Editor</title>
+<title>PicKI-Elements – Charakter wählen</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700;900&family=Share+Tech+Mono&display=swap');
 :root{--bg:#06080f;--surface:#0c0f1a;--card:#111827;--border:#1e2535;--accent:#7c5cfc;--accent2:#fc5c9c;--text:#e8eaf6;--muted:#4a5280;}
-body.nsfw{--accent:#fc5c9c;--accent2:#ff2d78;--bg:#140818;--surface:#1a0820;--card:#1c0a28;--border:#3d1050;}
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;transition:background .5s;}
-body::before{content:'';position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(60vw,60vh);height:min(60vw,60vh);background-image:url('assets/logo.png');background-size:contain;background-repeat:no-repeat;background-position:center;opacity:0.03;pointer-events:none;z-index:0;filter:grayscale(100%) brightness(3);}
-.header{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;z-index:10;}
-.back-btn{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:7px 14px;color:var(--text);font-family:'Exo 2';font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;box-shadow:0 4px 0 #06060f;}
-.back-btn:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px);}
-.title{font-family:'Exo 2';font-weight:900;font-size:16px;}
+body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+body::before{content:'';position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(70vw,70vh);height:min(70vw,70vh);background-image:url('assets/logo.png');background-size:contain;background-repeat:no-repeat;background-position:center;opacity:0.04;pointer-events:none;z-index:0;filter:grayscale(100%) brightness(3);}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;z-index:10;}
+.back-btn{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:7px 14px;color:var(--text);font-family:'Exo 2';font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;}
+.back-btn:hover{border-color:var(--accent);color:var(--accent);}
+.title{font-family:'Exo 2';font-weight:900;font-size:18px;}
 .title span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.nsfw-badge{display:none;font-family:'Share Tech Mono';font-size:10px;color:var(--accent2);background:var(--accent2)15;border:1px solid var(--accent2)44;padding:3px 10px;border-radius:20px;animation:pulse 2s infinite;}
-body.nsfw .nsfw-badge{display:block;}
-@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
-.btn-next{padding:8px 20px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;color:white;font-family:'Exo 2';font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,.4);transition:all .15s;}
-.btn-next:hover{transform:translateY(-2px);}
-.main{display:flex;flex:1;overflow:hidden;position:relative;z-index:1;}
-.panel{width:230px;flex-shrink:0;background:var(--surface);display:flex;flex-direction:column;overflow-y:auto;z-index:10;}
-.panel::-webkit-scrollbar{width:3px;}
-.panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
-.panel-left{border-right:1px solid var(--border);}
-.panel-right{border-left:1px solid var(--border);}
-.psec{padding:10px 12px;border-bottom:1px solid var(--border);}
-.psec-title{font-family:'Share Tech Mono';font-size:9px;color:var(--accent);letter-spacing:.15em;margin-bottom:8px;}
-.gender-row{display:flex;gap:5px;}
-.gbtn{flex:1;padding:6px 4px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--muted);font-family:'Exo 2';font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;text-align:center;}
-.gbtn.on{border-color:var(--accent);color:var(--accent);background:var(--accent)15;}
-.srow{margin-bottom:8px;}
-.slabel{display:flex;justify-content:space-between;margin-bottom:3px;}
-.sname{font-size:11px;font-weight:600;color:var(--text);}
-.sval{font-family:'Share Tech Mono';font-size:11px;color:var(--accent);}
-input[type=range]{width:100%;-webkit-appearance:none;height:3px;border-radius:3px;background:var(--border);outline:none;cursor:pointer;display:block;}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent)90;cursor:pointer;}
-.sunit{font-size:9px;color:var(--muted);margin-top:2px;}
-.nx{display:none;}
-body.nsfw .nx{display:block;}
-.nx-div{display:none;padding:6px 12px;background:var(--accent2)08;border-top:1px solid var(--accent2)22;border-bottom:1px solid var(--accent2)22;font-family:'Share Tech Mono';font-size:9px;color:var(--accent2);letter-spacing:.15em;}
-body.nsfw .nx-div{display:block;}
-.center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;}
-#c{position:absolute;inset:0;width:100%;height:100%;cursor:grab;}
-#c:active{cursor:grabbing;}
-.loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;font-family:'Share Tech Mono';font-size:12px;color:var(--accent);letter-spacing:.1em;z-index:5;pointer-events:none;}
-.loading-bar{width:200px;height:2px;background:var(--border);border-radius:2px;margin:10px auto 0;}
-.loading-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .3s;}
-.hint{position:absolute;bottom:12px;font-family:'Share Tech Mono';font-size:10px;color:var(--muted);z-index:5;pointer-events:none;}
-.bottom{display:flex;gap:6px;padding:10px 16px;background:var(--surface);border-top:1px solid var(--border);z-index:10;}
-.pbtn{flex:1;padding:7px;border-radius:8px;font-family:'Exo 2';font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text);transition:all .15s;}
-.pbtn:hover{border-color:var(--accent);color:var(--accent);}
-.pbtn.save{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:white;}
-@media(max-width:700px){.panel{display:none;}}
+.main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:40px;position:relative;z-index:1;padding:20px;}
+.headline{text-align:center;}
+.headline h2{font-size:13px;font-family:'Share Tech Mono';color:var(--muted);letter-spacing:.2em;text-transform:uppercase;margin-bottom:12px;}
+.headline h1{font-size:clamp(24px,4vw,38px);font-weight:900;line-height:1.1;}
+.headline h1 span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;width:100%;max-width:600px;}
+@media(min-width:700px){.cards{grid-template-columns:repeat(4,1fr);max-width:860px;}}
+.card{position:relative;background:var(--card);border:2px solid var(--border);border-radius:20px;padding:32px 16px 24px;cursor:pointer;transition:all .25s;display:flex;flex-direction:column;align-items:center;gap:14px;overflow:hidden;}
+.card:hover{transform:translateY(-6px);}
+.card-glow{position:absolute;inset:0;opacity:0;transition:opacity .3s;border-radius:18px;}
+.card:hover .card-glow{opacity:1;}
+.card-icon{font-size:52px;line-height:1;position:relative;z-index:1;}
+.card-label{font-size:16px;font-weight:900;position:relative;z-index:1;}
+.card-sub{font-size:11px;font-family:'Share Tech Mono';color:var(--muted);position:relative;z-index:1;text-align:center;line-height:1.6;}
+.card-arrow{position:absolute;bottom:14px;right:16px;font-size:18px;opacity:0;transition:all .2s;z-index:1;}
+.card:hover .card-arrow{opacity:1;transform:translateX(4px);}
+/* Farben */
+.card-f{--col:#fc5c9c;}
+.card-f:hover{border-color:#fc5c9c;box-shadow:0 12px 40px rgba(252,92,156,0.25);}
+.card-f .card-label{color:#fc5c9c;}
+.card-f .card-arrow{color:#fc5c9c;}
+.card-f .card-glow{background:radial-gradient(ellipse at center,rgba(252,92,156,0.08) 0%,transparent 70%);}
+.card-m{--col:#5c9cfc;}
+.card-m:hover{border-color:#5c9cfc;box-shadow:0 12px 40px rgba(92,156,252,0.25);}
+.card-m .card-label{color:#5c9cfc;}
+.card-m .card-arrow{color:#5c9cfc;}
+.card-m .card-glow{background:radial-gradient(ellipse at center,rgba(92,156,252,0.08) 0%,transparent 70%);}
+.card-d{--col:#c85cfc;}
+.card-d:hover{border-color:#c85cfc;box-shadow:0 12px 40px rgba(200,92,252,0.25);}
+.card-d .card-label{color:#c85cfc;}
+.card-d .card-arrow{color:#c85cfc;}
+.card-d .card-glow{background:radial-gradient(ellipse at center,rgba(200,92,252,0.08) 0%,transparent 70%);}
+.card-k{--col:#fc9c5c;}
+.card-k:hover{border-color:#fc9c5c;box-shadow:0 12px 40px rgba(252,156,92,0.25);}
+.card-k .card-label{color:#fc9c5c;}
+.card-k .card-arrow{color:#fc9c5c;}
+.card-k .card-glow{background:radial-gradient(ellipse at center,rgba(252,156,92,0.08) 0%,transparent 70%);}
+/* Entrance animation */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.card{animation:fadeUp .4s ease both;}
+.card:nth-child(1){animation-delay:.05s;}
+.card:nth-child(2){animation-delay:.1s;}
+.card:nth-child(3){animation-delay:.15s;}
+.card:nth-child(4){animation-delay:.2s;}
+.hint-text{font-family:'Share Tech Mono';font-size:10px;color:var(--muted);text-align:center;animation:fadeUp .4s .3s ease both;}
 </style>
 </head>
 <body>
+
 <header class="header">
   <button class="back-btn" onclick="goHome()">← Zurück</button>
-  <div class="title">Body <span>Editor</span></div>
-  <div style="display:flex;align-items:center;gap:10px">
-    <div class="nsfw-badge">🔞 NSFW</div>
-    <button class="btn-next" onclick="goNext()">Schritt 1 →</button>
-  </div>
+  <div class="title">PicKI <span>Elements</span></div>
+  <div style="width:80px"></div>
 </header>
 
 <div class="main">
-<!-- LEFT PANEL -->
-<div class="panel panel-left">
-  <div class="psec">
-    <div class="psec-title">Geschlecht</div>
-    <div class="gender-row">
-      <div class="gbtn on" onclick="setG('f',this)">♀ Frau</div>
-      <div class="gbtn" onclick="setG('m',this)">♂ Mann</div>
+  <div class="headline">
+    <h2>Schritt 0 · Body Editor</h2>
+    <h1>Wen möchtest du<br><span>gestalten?</span></h1>
+  </div>
+
+  <div class="cards">
+    <div class="card card-f" onclick="choose('f')">
+      <div class="card-glow"></div>
+      <div class="card-icon">♀️</div>
+      <div class="card-label">Frau</div>
+      <div class="card-sub">Weiblicher<br>Charakter</div>
+      <div class="card-arrow">→</div>
+    </div>
+    <div class="card card-m" onclick="choose('m')">
+      <div class="card-glow"></div>
+      <div class="card-icon">♂️</div>
+      <div class="card-label">Mann</div>
+      <div class="card-sub">Männlicher<br>Charakter</div>
+      <div class="card-arrow">→</div>
+    </div>
+    <div class="card card-d" onclick="choose('d')">
+      <div class="card-glow"></div>
+      <div class="card-icon">⚧️</div>
+      <div class="card-label">Divers</div>
+      <div class="card-sub">Diverser<br>Charakter</div>
+      <div class="card-arrow">→</div>
+    </div>
+    <div class="card card-k" onclick="choose('k')">
+      <div class="card-glow"></div>
+      <div class="card-icon">🦊</div>
+      <div class="card-label">Kemi</div>
+      <div class="card-sub">Fuchs-Mensch<br>Mischling</div>
+      <div class="card-arrow">→</div>
     </div>
   </div>
-  <div class="psec">
-    <div class="psec-title">Körper</div>
-    <div class="srow"><div class="slabel"><span class="sname">Höhe</span><span class="sval" id="v-h">168</span></div><input type="range" min="140" max="210" value="168" oninput="u('h',this.value)"><div class="sunit">cm</div></div>
-    <div class="srow"><div class="slabel"><span class="sname">Hautton</span><span class="sval" id="v-sk">3</span></div><input type="range" min="1" max="7" value="3" oninput="u('sk',this.value)"><div class="sunit" id="skLabel">Mittel</div></div>
-  </div>
-  <div class="psec" id="femSec">
-    <div class="psec-title">Oberkörper</div>
-    <div class="srow"><div class="slabel"><span class="sname">Schultern</span><span class="sval" id="v-sh">0</span></div><input type="range" min="0" max="100" value="0" oninput="morphSlider('measure-shoulder-dist-decr',this.value,'sh')"></div>
-    <div class="srow"><div class="slabel"><span class="sname">Taille</span><span class="sval" id="v-wa">0</span></div><input type="range" min="0" max="100" value="0" oninput="morphSlider('measure-waist-circ-decr',this.value,'wa')"></div>
-    <div class="srow"><div class="slabel"><span class="sname">Brustumfang</span><span class="sval" id="v-bu">0</span></div><input type="range" min="0" max="100" value="0" oninput="morphSlider('measure-bust-circ-incr',this.value,'bu')"></div>
-  </div>
-  <div class="psec" id="breastSec">
-    <div class="psec-title">Brust</div>
-    <div class="srow"><div class="slabel"><span class="sname">Volumen</span><span class="sval" id="v-bv">0</span></div><input type="range" min="0" max="100" value="0" oninput="morphSlider('breast-volume-vert-up',this.value,'bv')"></div>
-    <div class="srow"><div class="slabel"><span class="sname">Position ↕</span><span class="sval" id="v-bp">0</span></div><input type="range" min="0" max="100" value="0" oninput="morphSlider('breast-trans-up',this.value,'bp')"></div>
-    <div class="srow"><div class="slabel"><span class="sname">Abstand ↔</span><span class="sval" id="v-bd">0</span></div><input type="range" min="0" max="100" value="0" oninput="morphSlider('breast-dist-decr',this.value,'bd')"></div>
-  </div>
-  <div class="psec" id="maleSec" style="display:none">
-    <div class="psec-title">Oberkörper</div>
-    <div class="srow"><div class="slabel"><span class="sname">V-Form</span><span class="sval" id="v-mv">0</span></div><input type="range" min="0" max="100" value="0" oninput="morphSlider('torso-vshape-incr',this.value,'mv')"></div>
-    <div class="srow"><div class="slabel"><span class="sname">Brustmuskel</span><span class="sval" id="v-mp">0</span></div><input type="range" min="0" max="100" value="0" oninput="morphSlider('torso-muscle-pectoral-incr',this.value,'mp')"></div>
-    <div class="srow"><div class="slabel"><span class="sname">Rücken</span><span class="sval" id="v-md">0</span></div><input type="range" min="0" max="100" value="0" oninput="morphSlider('torso-muscle-dorsi-incr',this.value,'md')"></div>
-  </div>
-  <div class="nx-div">🔞 INTIM – DAMEN</div>
-  <div class="psec nx">
-    <div class="srow"><div class="slabel"><span class="sname">Schamlippen</span><span class="sval" id="v-la">2</span></div><input type="range" min="1" max="4" value="2" oninput="u('la',this.value)"><div class="sunit" id="laLabel">Natürlich</div></div>
-    <div class="srow"><div class="slabel"><span class="sname">Intimbehaarung</span><span class="sval" id="v-ph">1</span></div><input type="range" min="1" max="8" value="1" oninput="u('ph',this.value)"><div class="sunit" id="phLabel">Babypopo 👶</div></div>
-  </div>
-  <div class="nx-div">🔞 INTIM – HERREN</div>
-  <div class="psec nx">
-    <div class="srow"><div class="slabel"><span class="sname">Länge 😄</span><span class="sval" id="v-pl">3</span></div><input type="range" min="1" max="7" value="3" oninput="u('pl',this.value)"><div class="sunit" id="plLabel">M</div></div>
-    <div class="srow"><div class="slabel"><span class="sname">Hodensack</span><span class="sval" id="v-sc">2</span></div><input type="range" min="1" max="4" value="2" oninput="u('sc',this.value)"><div class="sunit" id="scLabel">Normal</div></div>
-  </div>
+
+  <div class="hint-text">Wähle einen Typ um den Body Editor zu öffnen</div>
 </div>
 
-<!-- CENTER -->
-<div class="center">
-  <canvas id="c"></canvas>
-  <div class="loading" id="loading">
-    <div>🔄 Lade 3D Modell...</div>
-    <div class="loading-bar"><div class="loading-fill" id="loadFill" style="width:0%"></div></div>
-  </div>
-  <div class="hint">🖱 Ziehen = Rotieren · Scroll = Zoom</div>
-</div>
-
-<!-- RIGHT PANEL -->
-<div class="panel panel-right">
-  <div class="psec">
-    <div class="psec-title">Hüfte & Po</div>
-    <div class="srow"><div class="slabel"><span class="sname">Hüftumfang</span><span class="sval" id="v-hi">0</span></div><input type="range" min="0" max="100" value="0" oninput="morphSlider('measure-hips-circ-decr',this.value,'hi')"></div>
-  </div>
-  <div class="psec">
-    <div class="psec-title">Beine</div>
-    <div class="srow"><div class="slabel"><span class="sname">Oberschenkel Länge</span><span class="sval" id="v-ll">0</span></div><input type="range" min="0" max="100" value="0" oninput="morphSlider('measure-upperleg-height-incr',this.value,'ll')"></div>
-    <div class="srow"><div class="slabel"><span class="sname">Unterschenkel Länge</span><span class="sval" id="v-lll">0</span></div><input type="range" min="0" max="100" value="0" oninput="morphSlider('measure-lowerleg-height-incr',this.value,'lll')"></div>
-    <div class="srow" id="femLeg"><div class="slabel"><span class="sname">Knie Umfang</span><span class="sval" id="v-kn">0</span></div><input type="range" min="0" max="100" value="0" oninput="morphSlider('measure-knee-circ-decr',this.value,'kn')"></div>
-    <div class="srow" id="maleLeg" style="display:none"><div class="slabel"><span class="sname">Oberschenkel Umfang</span><span class="sval" id="v-th">0</span></div><input type="range" min="0" max="100" value="0" oninput="morphSlider('measure-thigh-circ-incr',this.value,'th')"></div>
-    <div class="srow" id="maleCalf" style="display:none"><div class="slabel"><span class="sname">Wade</span><span class="sval" id="v-ca">0</span></div><input type="range" min="0" max="100" value="0" oninput="morphSlider('measure-calf-circ-incr',this.value,'ca')"></div>
-  </div>
-  <div class="psec">
-    <div class="psec-title">Arme</div>
-    <div class="srow"><div class="slabel"><span class="sname">Oberarm Länge</span><span class="sval" id="v-al">0</span></div><input type="range" min="0" max="100" value="0" oninput="morphSlider('measure-upperarm-length-decr',this.value,'al')"></div>
-    <div class="srow"><div class="slabel"><span class="sname">Unterarm Länge</span><span class="sval" id="v-arl">0</span></div><input type="range" min="0" max="100" value="0" oninput="morphSlider('measure-lowerarm-length-decr',this.value,'arl')"></div>
-    <div class="srow" id="maleArm" style="display:none"><div class="slabel"><span class="sname">Oberarm Umfang</span><span class="sval" id="v-at">0</span></div><input type="range" min="0" max="100" value="0" oninput="morphSlider('measure-upperarm-circ-incr',this.value,'at')"></div>
-  </div>
-</div>
-</div>
-
-<div class="bottom">
-  <button class="pbtn" onclick="resetMorphs()">↺ Reset</button>
-  <button class="pbtn" onclick="goHome()">📂 Projekte</button>
-  <button class="pbtn save" onclick="saveProfile()">💾 Speichern</button>
-  <button class="pbtn" onclick="genPrompt()">✦ Prompt</button>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-// ── State ──
-const B = { g:'f', h:168, sk:3, la:2, ph:1, pl:3, sc:2 };
-const morphValues = {};
-let nsfw = false;
-let drag = false, prevX = 0, prevY = 0;
-let currentModel = null;
-let mixer = null;
-
-const skL = ['Sehr hell','Hell','Mittel','Olive','Gebräunt','Dunkel','Sehr dunkel'];
-const skinTones = [0xfde8d8,0xf5c8a8,0xe8a878,0xc87848,0xa05828,0x703818,0x401808];
-const laL = ['–','Innenliegend','Natürlich','Ausgeprägt','Tarzan 🌿'];
-const phL = ['–','Babypopo 👶','Gewachst','Landebahn ✈️','Dreieck','Getrimmt','Natürlich','Wilder Garten 🌿','Dschungel 🌴'];
-const plL = ['–','S','M','L','XL','XXL 😮','Pferd 🐴','Reiten? 🎠'];
-const scL = ['–','Eng','Normal','Hängend','Turmglocke 🔔'];
-
-function u(k, v) {
-  B[k] = parseFloat(v);
-  const el = document.getElementById('v-'+k);
-  if (el) el.textContent = v;
-  if (k==='sk') { document.getElementById('skLabel').textContent = skL[v-1]||v; updateSkin(); }
-  if (k==='la') document.getElementById('laLabel').textContent = laL[v]||v;
-  if (k==='ph') document.getElementById('phLabel').textContent = phL[v]||v;
-  if (k==='pl') document.getElementById('plLabel').textContent = plL[v]||v;
-  if (k==='sc') document.getElementById('scLabel').textContent = scL[v]||v;
-  if (k==='h') updateHeight();
+function choose(g){
+  if(window.api) window.api.navigate('step0'+g);
+  else location.href = 'step0'+g+'.html';
 }
-
-function morphSlider(morphName, value, key) {
-  const normalized = parseFloat(value) / 100;
-  morphValues[morphName] = normalized;
-  const el = document.getElementById('v-'+key);
-  if (el) el.textContent = value;
-  applyMorphs();
+function goHome(){
+  if(window.api) window.api.navigate('home');
+  else history.back();
 }
-
-function applyMorphs() {
-  if (!currentModel) return;
-  currentModel.traverse(child => {
-    if (child.isMesh && child.morphTargetInfluences && child.morphTargetDictionary) {
-      Object.entries(morphValues).forEach(([name, val]) => {
-        const idx = child.morphTargetDictionary[name];
-        if (idx !== undefined) {
-          child.morphTargetInfluences[idx] = val;
-        }
-      });
-    }
-  });
-}
-
-function updateSkin() {
-  const color = skinTones[Math.min(B.sk-1, 6)];
-  if (!currentModel) return;
-  currentModel.traverse(child => {
-    if (child.isMesh && child.material) {
-      child.material.color.setHex(color);
-      child.material.needsUpdate = true;
-    }
-  });
-}
-
-function updateHeight() {
-  if (!currentModel) return;
-  const scale = B.h / 168;
-  currentModel.scale.y = scale;
-}
-
-function setG(g, el) {
-  B.g = g;
-  document.querySelectorAll('.gbtn').forEach(b=>b.classList.remove('on'));
-  el.classList.add('on');
-  // Show/hide gender panels
-  document.getElementById('femSec').style.display = g==='m' ? 'none' : 'block';
-  document.getElementById('breastSec').style.display = g==='m' ? 'none' : 'block';
-  document.getElementById('maleSec').style.display = g==='m' ? 'block' : 'none';
-  document.getElementById('femLeg').style.display = g==='m' ? 'none' : 'block';
-  document.getElementById('maleLeg').style.display = g==='m' ? 'block' : 'none';
-  document.getElementById('maleCalf').style.display = g==='m' ? 'block' : 'none';
-  document.getElementById('maleArm').style.display = g==='m' ? 'block' : 'none';
-  // Reset morphs and load model
-  Object.keys(morphValues).forEach(k => delete morphValues[k]);
-  loadModel();
-}
-
-// NSFW
-document.addEventListener('keydown', e => {
-  if (e.ctrlKey && e.shiftKey && e.key==='N') {
-    e.preventDefault();
-    nsfw = !nsfw;
-    document.body.classList.toggle('nsfw', nsfw);
-    if (window.api) window.api.setNsfwMode(nsfw);
-  }
-});
-if (window.api?.onNsfwMode) window.api.onNsfwMode(on => {
-  nsfw = on;
-  document.body.classList.toggle('nsfw', on);
-});
-
-// ── THREE.JS ──
-const canvas = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
-renderer.setClearColor(0x000000, 0);
-renderer.setPixelRatio(window.devicePixelRatio);
-renderer.shadowMap.enabled = true;
-
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 100);
-camera.position.set(0, 1, 4);
-camera.lookAt(0, 0.8, 0);
-
-// Lights
-const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-scene.add(ambient);
-const front = new THREE.DirectionalLight(0xffffff, 0.8);
-front.position.set(1, 3, 3);
-scene.add(front);
-const rim = new THREE.DirectionalLight(0x7c5cfc, 0.3);
-rim.position.set(-2, 2, -1);
-scene.add(rim);
-const bottom = new THREE.DirectionalLight(0xfc5c9c, 0.2);
-bottom.position.set(0, -2, 1);
-scene.add(bottom);
-
-const bodyGroup = new THREE.Group();
-scene.add(bodyGroup);
-
-// Load GLB
-function loadModel() {
-  while(bodyGroup.children.length) bodyGroup.remove(bodyGroup.children[0]);
-  currentModel = null;
-
-  const file = B.g === 'm' ? 'assets/male_base_model.glb' : 'assets/female_base_model.glb';
-  document.getElementById('loading').style.display = 'block';
-  document.getElementById('loadFill').style.width = '0%';
-
-  const loader = new THREE.GLTFLoader();
-  loader.load(
-    file,
-    (gltf) => {
-      document.getElementById('loading').style.display = 'none';
-      const model = gltf.scene;
-
-      // Center
-      const box = new THREE.Box3().setFromObject(model);
-      const center = box.getCenter(new THREE.Vector3());
-      const size = box.getSize(new THREE.Vector3());
-      model.position.sub(center);
-      model.position.y += size.y / 2;
-
-      // Scale
-      const scale = 1.8 / size.y;
-      model.scale.setScalar(scale);
-
-      // Apply skin color
-      const skinColor = skinTones[Math.min(B.sk-1, 6)];
-      model.traverse(child => {
-        if (child.isMesh) {
-          child.material = new THREE.MeshPhongMaterial({
-            color: skinColor,
-            shininess: 30,
-            specular: new THREE.Color(0x111111),
-          });
-          child.castShadow = true;
-
-          // Log available morphs
-          if (child.morphTargetDictionary) {
-            console.log('Morph Targets:', Object.keys(child.morphTargetDictionary));
-          }
-        }
-      });
-
-      bodyGroup.add(model);
-      currentModel = model;
-    },
-    (progress) => {
-      const pct = (progress.loaded / (progress.total || 1)) * 100;
-      document.getElementById('loadFill').style.width = Math.min(pct, 100) + '%';
-    },
-    (error) => {
-      console.error('GLB Fehler:', error);
-      document.getElementById('loading').innerHTML = '<div style="color:#ef4444">⚠️ Modell nicht gefunden!</div>';
-    }
-  );
-}
-
-// Mouse controls – ONLY on canvas
-canvas.addEventListener('mousedown', e => { drag=true; prevX=e.clientX; prevY=e.clientY; e.preventDefault(); });
-canvas.addEventListener('mouseup', () => drag=false);
-canvas.addEventListener('mouseleave', () => drag=false);
-canvas.addEventListener('mousemove', e => {
-  if (!drag) return;
-  bodyGroup.rotation.y += (e.clientX-prevX)*0.012;
-  bodyGroup.rotation.x = Math.max(-0.4, Math.min(0.4, bodyGroup.rotation.x+(e.clientY-prevY)*0.006));
-  prevX=e.clientX; prevY=e.clientY;
-});
-canvas.addEventListener('wheel', e => {
-  camera.position.z = Math.max(1.5, Math.min(8, camera.position.z+e.deltaY*0.005));
-  e.preventDefault();
-}, {passive:false});
-
-// Touch
-let pt = null;
-canvas.addEventListener('touchstart', e => { pt=e.touches[0]; e.preventDefault(); }, {passive:false});
-canvas.addEventListener('touchmove', e => {
-  if (!pt) return;
-  bodyGroup.rotation.y += (e.touches[0].clientX-pt.clientX)*0.012;
-  pt=e.touches[0];
-  e.preventDefault();
-}, {passive:false});
-
-// Resize
-function resize() {
-  const w = canvas.parentElement.clientWidth;
-  const h = canvas.parentElement.clientHeight;
-  renderer.setSize(w, h);
-  camera.aspect = w/h;
-  camera.updateProjectionMatrix();
-}
-window.addEventListener('resize', resize);
-resize();
-
-// Animate
-function animate() {
-  requestAnimationFrame(animate);
-  renderer.render(scene, camera);
-}
-
-function resetMorphs() {
-  Object.keys(morphValues).forEach(k => delete morphValues[k]);
-  document.querySelectorAll('input[type=range]').forEach(el => {
-    if (el.dataset.morph) el.value = 0;
-  });
-  if (currentModel) {
-    currentModel.traverse(child => {
-      if (child.isMesh && child.morphTargetInfluences) {
-        child.morphTargetInfluences.fill(0);
-      }
-    });
-  }
-}
-
-function saveProfile() {
-  if (!window.api) return;
-  const name = prompt('Profilname:', 'Mein Charakter') || 'Charakter';
-  window.api.saveProject({name, bodyState:{...B, morphValues}, currentStep:0, thumb: B.g==='f'?'👩':'👨'})
-    .then(r => { if(r?.success) alert('✓ Gespeichert!'); });
-}
-
-function genPrompt() {
-  const parts = [
-    B.g==='f'?'woman':'man',
-    B.h+'cm tall',
-    ['very fair skin','fair skin','medium skin tone','olive skin tone','tan skin','dark skin','very dark skin'][B.sk-1],
-  ];
-  const p = parts.join(', ');
-  navigator.clipboard.writeText(p).catch(()=>{});
-  alert('✓ Prompt kopiert:\n\n'+p);
-}
-
-function goHome() { if(window.api) window.api.navigate('home'); else history.back(); }
-function goNext() { if(window.api) window.api.navigate('step1'); }
-
-// Load GLTFLoader
-const script = document.createElement('script');
-script.src = 'js/GLTFLoader.js';
-script.onload = () => { loadModel(); animate(); };
-script.onerror = () => {
-  document.getElementById('loading').innerHTML = '<div style="color:#ef4444">⚠️ GLTFLoader fehlt!</div>';
-};
-document.head.appendChild(script);
 </script>
 </body>
 </html>
